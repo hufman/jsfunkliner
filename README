@@ -1,0 +1,1 @@
+Given a Javascript snippet and a library of code, recursively inline every function until the original snippet contains the same functionality but without calling any functions available in the library

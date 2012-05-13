@@ -11,6 +11,12 @@ class TestBasic(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, '')
 		self.assertEqual(expected, output)
 
+	def test_external(self):
+		input="window.alert('Test')"
+		expected="window.alert('Test')"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+
 	def test_singlecall(self):
 		library="function log(message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }"
 		input='log("This is a test")'

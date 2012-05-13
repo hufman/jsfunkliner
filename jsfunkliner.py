@@ -231,6 +231,8 @@ def inlineSingle(inputtext, librarytext):
 					crawlexpression(piece)
 
 		def replacefunction(self, call, name):
+			if not 'window.'+call[0].value in functions:
+				return
 			function = functions['window.'+call[0].value]
 			arguments = ['"'+node.value+'"' if node.type=='STRING' else node.value for node in call[1]]
 			functionout = inlineFunction(self.librarytext, function, arguments, name)

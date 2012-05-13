@@ -78,10 +78,15 @@ def inlineFunction(librarytext, function, arguments, retval):
 			#print("Looking at statement "+str(statement))
 			if statement.type == "RETURN":
 				self.output.append(self.librarytext[self.inputoffset:statement.start])
+				self.inputoffset=statement.value.start
 				if self.needsRetVal and self.retval != None:
 					self.output.append("%s = "%self.retval)
-				self.inputoffset=statement.value.start
-				self.walkexpression(statement.value)
+					self.walkexpression(statement.value)
+					self.output.append(self.librarytext[self.inputoffset:statement.end])
+					self.inputoffset = statement.end
+					self.output.append(";\n")
+				else:
+					self.walkexpression(statement.value)
 			elif statement.type == 'CALL':
 				self.replaceIdentifier(statement[0])	# possibly replace the function name
 				self.walkexpression(statement[1])	# replace any arguments to the function
@@ -97,47 +102,45 @@ def inlineFunction(librarytext, function, arguments, retval):
 				if child and isinstance(child, jsparser.Node):
 					if hasattr(child, 'expression'):
 						self.walkstatement(child.expression)
-					elif hasattr(child, 'length'):
+					elif len(child):
 						self.walkbranch(child)
 					else:
 						try:
-							firstchild = child[0]
-							self.walkbranch(child)
+							self.walkstatement(child.expression)
 						except:
-							try:
-								self.walkstatement(child.expression)
-							except:
-								excinfo=sys.exc_info()
-								sys.excepthook(excinfo[0], excinfo[1], excinfo[2])
-								print("unknown type of child: "+str(child))
+							excinfo=sys.exc_info()
+							sys.excepthook(excinfo[0], excinfo[1], excinfo[2])
+							print("unknown type of child: "+str(child))
 			if self.inputoffset < statement.end:
 				#print("Setting offset to "+str(statement.end))
 				self.output.append(self.librarytext[self.inputoffset:statement.end])
 				self.inputoffset=statement.end
 
 		def walkexpression(self, expression):
-			for piece in expression:
-				#print("Looking at expression piece "+str(piece));
-				length = getattr(piece, 'length', None)
-				if piece.type=='IDENTIFIER':
-					self.replaceIdentifier(piece)
-				elif piece.type=='CALL':
-					self.walkexpression(piece)
-				elif piece.type=='STRING':
-					pass
-				elif length:
-					self.walkexpression(piece)
-				else:
-					try:
-						firstchild = piece[0]
-						self.walkexpression(piece)
-					except:
-						try:
-							self.walkexpression(piece.expression)
-						except:
-							excinfo=sys.exc_info()
-							sys.excepthook(excinfo[0], excinfo[1], excinfo[2])
-							print("unknown type of piece: "+str(piece))
+			if len(expression):
+				for piece in expression:
+					self.walkexpressionpiece(piece)
+			else:
+				self.walkexpressionpiece(expression)
+		def walkexpressionpiece(self, piece):
+			#print("Looking at expression piece "+str(piece));
+			if piece.type=='IDENTIFIER':
+				self.replaceIdentifier(piece)
+			elif piece.type=='CALL':
+				self.walkexpression(piece)
+			elif piece.type=='STRING':
+				pass
+			elif piece.type=='NUMBER':
+				pass
+			elif len(piece):
+				self.walkexpression(piece)
+			else:
+				try:
+					self.walkexpressionpiece(piece.expression)
+				except:
+					excinfo=sys.exc_info()
+					sys.excepthook(excinfo[0], excinfo[1], excinfo[2])
+					print("unknown type of piece: "+str(piece))
 
 		def replaceIdentifier(self, identifier):
 			#print("Trying to replace "+str(identifier.value)+" in "+str(self.params))
@@ -220,14 +223,13 @@ def inlineSingle(inputtext, librarytext):
 				self.callcount+=1
 				return
 			for piece in expression:
-				length = getattr(piece, 'length', None)
 				if piece.type=='CALL':
 					retname = 'ret'+name+str(self.callcount)
 					if not usesReturn:
 						retname = None
 					self.replacecall(piece, retname, usesReturn)
 					self.callcount+=1
-				elif length:
+				elif len(piece):
 					crawlexpression(piece)
 
 		def replacecall(self, call, name, usesReturn):

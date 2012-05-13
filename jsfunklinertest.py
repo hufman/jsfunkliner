@@ -80,6 +80,27 @@ class TestBasic(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 
+	def test_singlecallretval(self):
+		library="function square(one) { var two = one; return one * two; }"
+		input="var final = square(2)"
+		expected="var retfinal0 = undefined;\nvar two = 2; retfinal0 = 2 * two;\nvar final = retfinal0"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_multicallretval(self):
+		library="function square(one) { var two = one; return one * two; }\nfunction double(one) { var double = one * 2; return double; }"
+		input="var final = square(2) + double(3)"
+		expected="var retfinal0 = undefined;\nvar two = 2; retfinal0 = 2 * two;\nvar retfinal1 = undefined;\nvar double = 3 * 2; retfinal1 = double;\nvar final = retfinal0 + retfinal1"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_doublecallretval(self):
+		library="function square(one) { var two = one; return one * two; }"
+		input="var final = square(2) + square(3)"
+		expected="var retfinal0 = undefined;\nvar two = 2; retfinal0 = 2 * two;\nvar retfinal1 = undefined;\nvar two = 3; retfinal1 = 3 * two;\nvar final = retfinal0 + retfinal1"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
 if __name__ == '__main__':
 	if len(sys.argv)>1:
 		if hasattr(TestBasic,sys.argv[1]):

@@ -683,6 +683,7 @@ def Statement(t, x):
         tt = t.peekOnSameLine()
         if tt not in (END, NEWLINE, SEMICOLON, RIGHT_CURLY):
             n.value = Expression(t, x)
+            n.end = n.value.end
 
     elif tt == WITH:
         n = Node(t)

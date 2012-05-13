@@ -216,7 +216,7 @@ def inlineSingle(inputtext, librarytext):
 				retname = 'ret'+name+str(self.callcount)
 				if not usesReturn:
 					retname = None
-				self.replacefunction(expression, retname)
+				self.replacecall(expression, retname, usesReturn)
 				self.callcount+=1
 				return
 			for piece in expression:
@@ -225,12 +225,12 @@ def inlineSingle(inputtext, librarytext):
 					retname = 'ret'+name+str(self.callcount)
 					if not usesReturn:
 						retname = None
-					self.replacefunction(piece, retname)
+					self.replacecall(piece, retname, usesReturn)
 					self.callcount+=1
 				elif length:
 					crawlexpression(piece)
 
-		def replacefunction(self, call, name):
+		def replacecall(self, call, name, usesReturn):
 			if not 'window.'+call[0].value in functions:
 				return
 			function = functions['window.'+call[0].value]
@@ -242,8 +242,12 @@ def inlineSingle(inputtext, librarytext):
 				self.output.append(functionout.retval)
 				self.inputoffset = call.end
 			else:
-				self.output.append(self.inputtext[self.inputoffset:call.start])
-				self.output.append(functionout.getOutput())
+				if usesReturn:
+					self.output.append(self.inputtext[self.inputoffset:call.start]+"(")
+					self.output.append(functionout.getOutput()+")")
+				else:
+					self.output.append(self.inputtext[self.inputoffset:call.start])
+					self.output.append(functionout.getOutput())
 				self.inputoffset = call.end
 		def getOutput(self):
 			return ''.join(self.output)

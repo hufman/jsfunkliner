@@ -48,7 +48,7 @@ class TestBasic(unittest.TestCase):
 	def test_singlereturn(self):
 		library="function add(one, two) { return one + two; }"
 		input="var x = add(1,2);"
-		expected="var x = 1 + 2;"
+		expected="var x = (1 + 2);"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 
@@ -66,6 +66,19 @@ class TestBasic(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 
+	def test_doublecallinline(self):
+		library="function add(one, two) { return one + two; }"
+		input="var final = add(2,3) + add(4,1)"
+		expected="var final = (2 + 3) + (4 + 1)"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_multicallinline(self):
+		library="function add(one, two) { return one + two; }\nfunction sub(one, two) { return one - two; }"
+		input="var final = add(2,3) + sub(4,1)"
+		expected="var final = (2 + 3) + (4 - 1)"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 if __name__ == '__main__':
 	if len(sys.argv)>1:

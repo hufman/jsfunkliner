@@ -458,6 +458,7 @@ def nest(t, x, node, func, end=None):
     x.stmtStack.append(node)
     n = func(t, x)
     x.stmtStack.pop()
+    n.end=t.cursor
     if end: t.mustMatch(end)
     return n
 
@@ -596,6 +597,7 @@ def Statement(t, x):
                 n.update = Expression(t, x)
         t.mustMatch(RIGHT_PAREN)
         n.body = nest(t, x, n, Statement)
+        n.end = t.cursor
         return n
 
     elif tt == WHILE:
@@ -760,6 +762,7 @@ def FunctionDefinition(t, x, requireName, functionForm):
     x2 = CompilerContext(True)
     f.body = Script(t, x2)
     t.mustMatch(RIGHT_CURLY)
+    f.body.end = t.token.end
     f.end = t.token.end
 
     f.functionForm = functionForm

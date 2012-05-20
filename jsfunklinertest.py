@@ -101,12 +101,104 @@ class TestBasic(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 
+class TestUnrolling(unittest.TestCase):
+	def test_funloop(self):
+		input="for (var i=0; i<2; i+=1) log(i);"
+		expected="log(0);\nlog(1);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_funloop2(self):
+		input="for (var i=0; i<2; i=i+1) log(i);"
+		expected="log(0);\nlog(1);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_funloop3(self):
+		input="for (var i=0; i<3; i=1+i) log(i);"
+		expected="log(0);\nlog(1);\nlog(2);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_funloop4(self):
+		input="for (var i=0; i<5; i=i+3) log(i);"
+		expected="log(0);\nlog(3);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_funloop5(self):
+		input="for (var i=0; i<2; i++) log(i);"
+		expected="log(0);\nlog(1);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_funloop6(self):
+		input="for (var i=0; i<2; ++i) log(i);"
+		expected="log(0);\nlog(1);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_unfunloop(self):
+		input="for (var i=2; i>0; i-=1) log(i);"
+		expected="log(2);\nlog(1);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_unfunloop2(self):
+		input="for (var i=2; i>0; i=i-1) log(i);"
+		expected="log(2);\nlog(1);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_unfunloop3(self):
+		input="for (var i=5; i>0; i=i-3) log(i);"
+		expected="log(5);\nlog(2);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_unfunloop4(self):
+		input="for (var i=2; i>0; i--) log(i);"
+		expected="log(2);\nlog(1);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_unfunloop5(self):
+		input="for (var i=2; i>0; --i) log(i);"
+		expected="log(2);\nlog(1);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_funloopafter(self):
+		input="for (var i=0; i<2; i+=1) log(i);\nalert('hi')"
+		expected="log(0);\nlog(1);\nalert('hi')"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_funnyloopafter(self):
+		input="for (var i=0; i<2; i+=1) log(i) ;\nalert('hi')"
+		expected="log(0) ;\nlog(1) ;\nalert('hi')"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_funloopblock(self):
+		input="for (var i=0; i<2; i+=1) {log(i);}"
+		expected="log(0);\nlog(1);"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_funnyloopblock(self):
+		input="for (var i=0; i<2; i+=1) {log( i) ;}"
+		expected="log( 0) ;\nlog( 1) ;"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_doublefunloopblock(self):
+		input="for (var i=0; i<2; i+=1) { log(i); window.alert(i); }"
+		expected="log(0); window.alert(0); \nlog(1); window.alert(1); "
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+	def test_funloopblockafter(self):
+		input="for (var i=0; i<2; i+=1) {log(i);}\nalert('hi')"
+		expected="log(0);\nlog(1);\nalert('hi')"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+
 if __name__ == '__main__':
 	if len(sys.argv)>1:
-		if hasattr(TestBasic,sys.argv[1]):
-			case = TestBasic(sys.argv[1])
+		wanted=sys.argv[1]
+		if hasattr(TestBasic,wanted):
+			case = TestBasic(wanted)
 			case.run()
 		else:
-			print("Invalid testcase: "+sys.argv[1])
+			if hasattr(TestUnrolling,wanted):
+				case = TestUnrolling(wanted)
+				case.run()
+			else:
+				print("Invalid testcase: "+sys.argv[1])
 	else:
 		unittest.main()

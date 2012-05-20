@@ -34,45 +34,63 @@ def _crawlCalls(namespace, code):
 	return ret
 
 def inlineFunction(librarytext, function, arguments, retval):
+	params=function.params
+	replacements={}
+	for i in range(0, len(arguments)):
+		replacements[params[i]] = arguments[i]
+	return replaceIdentifiers(librarytext, function.body, replacements, retval)
+
+def replaceIdentifiers(librarytext, body, replacements, retval):
 	"""
-	Given a jsparse'd function object and a list of arguments that called it,
-	replace any uses of the function-defined args with the caller-defined args
-	and return the body of the function as a flat string
+	Given a jsparse'd body object and a map of replacements,
+	replace any identifiers that are found in the replacements map
+	and return the body as a flat string
+	If it is a function, special code happens for the return
 	Note: Only supports a single return as the last line of the function, if any return at all
 
 	If it is a single line function that returns stuff, .needsRetVal == False
 	If it is a multi-line function that returns stuff, .needsRetVal == True and .retval will contain the variable name to use
-		The retval passed to the inlineFunction function can be None, in which case any return lines are deleted
+		The retval passed to the replaceIdentifiers function can be None, in which case any return lines are deleted
 			This is used for calls that don't use the return
 	If it is a function that does not return stuff, .needsRetVal == False
 	"""
-	#print("Inlining function with args "+str(arguments))
-	class FunctionPromoter():
+	#print("Inlining function with args "+str(replacements))
+	class Replacer():
 		CHILD_ATTRS = ['thenPart', 'elsePart', 'expression', 'body', 'initializer']
-		def __init__(self, function, librarytext, retval):
+		def __init__(self):
 			self.output=[]
-			self.params=function.params
-			self.inputoffset=function.body[0].start
+			if len(body):
+				firstline=body[0]
+			else:
+				firstline=body
+			self.inputoffset=firstline.start
 			self.librarytext=librarytext
 			self.retval = retval
 
-			if function.body[0].type!='RETURN' and self.retval != None:
+			if firstline.type!='RETURN' and self.retval != None:
 				self.needsRetVal=True
 				self.output.append('var %s = undefined;\n'%self.retval)
 			else:
 				self.needsRetVal=False
 			oldoffset=self.inputoffset
-			#print("Looking at function "+str(function))
-			self.walkbranch(function.body)
-			#print("Inlined function: "+self.librarytext[oldoffset:self.inputoffset])
+			#print("Looking at code "+str(body))
+			if len(body):
+				self.walkbranch(body, True)
+			else:
+				self.walkstatement(body)
+			#print("Replaced params: "+self.librarytext[oldoffset:self.inputoffset])
 
-		def walkbranch(self, branch):
+		def walkbranch(self, branch, top):
 			for statement in branch:
 				self.walkstatement(statement)
 			if self.inputoffset < branch.end:
+				if top:
+					end = branch[len(branch)-1].end		# point to the end of the last statement of the block, to trim off the semicolon and any whitespace
+				else:
+					end = branch.end					# point to the end of the block
 				#print("appending "+self.librarytext[self.inputoffset:branch.end])
-				self.output.append(self.librarytext[self.inputoffset:branch.end])
-				self.inputoffset=branch.end
+				self.output.append(self.librarytext[self.inputoffset:end])
+				self.inputoffset=end
 
 		def walkstatement(self, statement):
 			#print("Looking at statement "+str(statement))
@@ -89,21 +107,20 @@ def inlineFunction(librarytext, function, arguments, retval):
 					self.walkexpression(statement.value)
 			elif statement.type == 'CALL':
 				self.replaceIdentifier(statement[0])	# possibly replace the function name
-				self.walkexpression(statement[1])	# replace any arguments to the function
+				self.walkexpression(statement[1])	# replace any replacements to the function
 			elif statement.type == 'IF':
 				self.walkexpression(statement.condition)
 			elif statement.type == 'SEMICOLON':
 				self.walkexpression(statement.expression)
 			elif statement.type == 'VAR':
 				self.walkexpression(statement[0].initializer)
-			for attr in FunctionPromoter.CHILD_ATTRS:
-				#import pdb; pdb.set_trace()
+			for attr in Replacer.CHILD_ATTRS:
 				child = getattr(statement, attr, None)
 				if child and isinstance(child, jsparser.Node):
 					if hasattr(child, 'expression'):
 						self.walkstatement(child.expression)
 					elif len(child):
-						self.walkbranch(child)
+						self.walkbranch(child, False)
 					else:
 						try:
 							self.walkstatement(child.expression)
@@ -143,18 +160,15 @@ def inlineFunction(librarytext, function, arguments, retval):
 					print("unknown type of piece: "+str(piece))
 
 		def replaceIdentifier(self, identifier):
-			#print("Trying to replace "+str(identifier.value)+" in "+str(self.params))
-			if identifier.value in self.params:
-				#print("Replacing "+identifier.value+" with "+str(arguments[self.params.index(identifier.value)]))
+			if identifier.value in replacements.keys():
 				self.output.append(self.librarytext[self.inputoffset:identifier.start])
-				self.output.append(str(arguments[self.params.index(identifier.value)]))
+				self.output.append(str(replacements[identifier.value]))
 				self.inputoffset = identifier.end
-				#print(self.output)
 
 		def getOutput(self):
 			return ''.join(self.output)
 
-	walker = FunctionPromoter(function, librarytext, retval)
+	walker = Replacer()
 	return walker
 
 
@@ -201,12 +215,18 @@ def inlineSingle(inputtext, librarytext):
 						self.callcount = 0
 						self.preput = ''
 						self.output.append(self.inputtext[self.inputoffset:statement.start])
+						self.inputoffset=statement.start
 						index = len(self.output)
 						self.walkexpression(child, name, False)
 						if len(self.preput)>0:
 							self.output.insert(index, self.preput)
 				elif statement.type == 'CALL':
 					self.replacefunction(statement, statement[0].value)
+				elif statement.type == 'FOR':
+					self.unloopFor(statement)
+					continue
+				#else:
+					#print("Unknown type of statement: "+str(statement))
 				for attr in Crawler.CHILD_ATTRS:
 					child = getattr(statement, attr, None)
 					if child and isinstance(child, jsparser.Node):
@@ -251,6 +271,96 @@ def inlineSingle(inputtext, librarytext):
 					self.output.append(self.inputtext[self.inputoffset:call.start])
 					self.output.append(functionout.getOutput())
 				self.inputoffset = call.end
+
+		def unloopFor(self, loop):
+			variable=None	# variable to replace
+			start=None		# starting value
+			cur=None		# current value
+			step=None		# how much to add/subtract on each loop
+			stop=None		# function saying whether to stop
+			maxiterations = 60		# how many times we will allow to unroll
+
+			# parse the initialization
+			setup = loop.setup
+			if setup.type=='VAR':
+				if setup[0].type=='IDENTIFIER' and \
+				   setup[0].initializer.type=='NUMBER':
+					variable = setup[0].value
+					start = setup[0].initializer.value
+
+			# parse the update
+			update = loop.update
+			if update.type=='INCREMENT':
+				step=1
+			elif update.type=='DECREMENT':
+				step=-1
+			elif update.type=='ASSIGN':		# more complex
+				#import pdb; pdb.set_trace()
+				if update[0].type=='IDENTIFIER' and \
+				   update[0].value==variable and \
+				   update[1].type=='NUMBER':
+					if update.value=='+':
+						step=0+update[1].value
+					elif update.value=='-':
+						step=0-update[1].value
+				if update[0].type=='IDENTIFIER' and \
+				   update[0].value==variable and \
+				   update[1].type=='PLUS':
+					if update[1][0].value==variable and \
+					   update[1][1].type=='NUMBER':
+						step=0+update[1][1].value
+					if update[1][1].value==variable and \
+					   update[1][0].type=='NUMBER':
+						step=0+update[1][0].value
+				if update[0].type=='IDENTIFIER' and \
+				   update[0].value==variable and \
+				   update[1].type=='MINUS':
+					if update[1][0].value==variable and \
+					   update[1][1].type=='NUMBER':
+						step=0-update[1][1].value
+
+			# parse the ending criteria
+			condition = loop.condition
+			if condition.type in ['LT', 'LE', 'GT', 'GE'] and condition[0].type=='IDENTIFIER' and condition[0].value==variable:
+				if condition.type=='LT' and step>0:
+					stop=lambda i: i >= condition[1].value
+				elif condition.type=='LE' and step>0:
+					stop=lambda i: i > condition[1].value
+				elif condition.type=='GT' and step<0:
+					stop=lambda i: i <= condition[1].value
+				elif condition.type=='GE' and step<0:
+					stop=lambda i: i < condition[1].value
+
+			# check that we parsed everything validly
+			if start is None or step is None or stop is None:
+				# could not parse something
+				return
+
+			# how many iterations in the loop
+			iterations = 0
+			cur = start
+			while iterations < maxiterations and \
+			      not stop(cur):
+				iterations+=1
+				cur += step
+			if iterations >= maxiterations:
+				# too many loop unwinds
+				return
+
+			# Do the unwinding
+			iterations = 0
+			cur = start
+			self.output.append(self.inputtext[self.inputoffset:loop.start])
+			self.inputoffset = loop.body.end
+			while not stop(cur):
+				bodyout = replaceIdentifiers(self.inputtext, loop.body, {"i":cur}, None)
+				self.output.append(bodyout.getOutput())
+				cur += step
+				if len(loop.body):
+					self.output.append(self.inputtext[loop.body[len(loop.body)-1].end:loop.end-1])
+				if not stop(cur):
+					self.output.append('\n')
+
 		def getOutput(self):
 			return ''.join(self.output)
 

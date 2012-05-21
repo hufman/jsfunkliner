@@ -290,32 +290,32 @@ def inlineSingle(inputtext, librarytext):
 
 			# parse the update
 			update = loop.update
-			if update.type=='INCREMENT':
+			if update.type=='INCREMENT':	# i++
 				step=1
-			elif update.type=='DECREMENT':
+			elif update.type=='DECREMENT':	# i--
 				step=-1
-			elif update.type=='ASSIGN':		# more complex
+			elif update.type=='ASSIGN':		# more complex update
 				#import pdb; pdb.set_trace()
-				if update[0].type=='IDENTIFIER' and \
+				if update[0].type=='IDENTIFIER' and \	# i+=1
 				   update[0].value==variable and \
 				   update[1].type=='NUMBER':
 					if update.value=='+':
 						step=0+update[1].value
 					elif update.value=='-':
 						step=0-update[1].value
-				if update[0].type=='IDENTIFIER' and \
+				if update[0].type=='IDENTIFIER' and \	# i=x+x
 				   update[0].value==variable and \
 				   update[1].type=='PLUS':
-					if update[1][0].value==variable and \
+					if update[1][0].value==variable and \	# i=i+1
 					   update[1][1].type=='NUMBER':
 						step=0+update[1][1].value
-					if update[1][1].value==variable and \
+					if update[1][1].value==variable and \	# i=1+i
 					   update[1][0].type=='NUMBER':
 						step=0+update[1][0].value
-				if update[0].type=='IDENTIFIER' and \
+				if update[0].type=='IDENTIFIER' and \	# i=x-x
 				   update[0].value==variable and \
 				   update[1].type=='MINUS':
-					if update[1][0].value==variable and \
+					if update[1][0].value==variable and \	# i=i-1
 					   update[1][1].type=='NUMBER':
 						step=0-update[1][1].value
 

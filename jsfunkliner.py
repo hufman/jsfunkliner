@@ -295,27 +295,32 @@ def inlineSingle(inputtext, librarytext):
 			elif update.type=='DECREMENT':	# i--
 				step=-1
 			elif update.type=='ASSIGN':		# more complex update
-				#import pdb; pdb.set_trace()
-				if update[0].type=='IDENTIFIER' and \	# i+=1
+				# i+=1
+				if update[0].type=='IDENTIFIER' and \
 				   update[0].value==variable and \
 				   update[1].type=='NUMBER':
 					if update.value=='+':
 						step=0+update[1].value
 					elif update.value=='-':
 						step=0-update[1].value
-				if update[0].type=='IDENTIFIER' and \	# i=x+x
+				# i=x+x
+				if update[0].type=='IDENTIFIER' and \
 				   update[0].value==variable and \
 				   update[1].type=='PLUS':
-					if update[1][0].value==variable and \	# i=i+1
+					# i=i+1
+					if update[1][0].value==variable and \
 					   update[1][1].type=='NUMBER':
 						step=0+update[1][1].value
-					if update[1][1].value==variable and \	# i=1+i
+					# i=1+i
+					if update[1][1].value==variable and \
 					   update[1][0].type=='NUMBER':
 						step=0+update[1][0].value
-				if update[0].type=='IDENTIFIER' and \	# i=x-x
+				# i=x-x
+				if update[0].type=='IDENTIFIER' and \
 				   update[0].value==variable and \
 				   update[1].type=='MINUS':
-					if update[1][0].value==variable and \	# i=i-1
+					# i=i-1
+					if update[1][0].value==variable and \
 					   update[1][1].type=='NUMBER':
 						step=0-update[1][1].value
 

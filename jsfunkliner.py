@@ -5,13 +5,151 @@ import types
 import traceback
 import sys
 
-def _crawlFunctions(namespace, code):
-	ret={}
+class JSEnvironment:
+	def __init__(self, root, this):
+		"""
+		Create a blank environment, with the given root object and a blank local scope
+		"""
+		self.root = root
+		self.this = [this]
+		self.scopes = [{}]
+
+	def pushThis(self, newthis):
+		"""
+		Change the current this object, saving the old one for a future pop
+		"""
+		self.this.push(this)
+
+	def popThis(self):
+		"""
+		Delete the current this object and revert to the previous
+		"""
+		return self.this.pop
+
+	def getThis(self):
+		"""
+		Return the current this object
+		"""
+		return self.this[-1]
+
+	def pushScope(self):
+		"""
+		Change the current local scope, saving the old scope for a future pop
+		"""
+		self.scopes.push({})
+
+	def popScope(self):
+		"""
+		Delete the current scope and revert to the previous
+		"""
+		self.scopes.pop()
+
+	def createLocal(self, name):
+		"""
+		Define a variable in the current local scope
+		"""
+		self.scopes[-1][name] = None
+
+	def set(self, name, value):
+		"""
+		Set a variable in the current local scope, if it is defined
+		Otherwise, create it inside the global object
+
+		if the name has period separators, navigate the scopes to find it
+		"""
+		parts=name.split('.')
+		if len(parts)>1:
+			if parts[0] in self.scopes[-1]:
+				curobject = self.scopes[-1][parts[0]]
+			else:
+				curobject = self.root[parts[0]]
+
+			for part in parts[1:-1]:
+				curobject = curobject.get(part)
+
+			curobject[parts[-1]] = value
+		else:
+			if parts[0] in self.scopes[-1]:
+				self.scopes[-1][name] = value
+			else:
+				self.root[name] = value
+			
+
+	def get(self, name):
+		"""
+		Returns the value for a variable in the current scope
+		If it is not in the local scope, return the variable of the global scope
+
+		if the name has period separators, navigate the scopes to find it
+		"""
+		parts=name.split('.')
+		if len(parts)>1:
+			if parts[0] in self.scopes[-1]:
+				curobject = self.scopes[-1][parts[0]]
+			else:
+				curobject = self.root[parts[0]]
+
+			for part in parts[1:-1]:
+				curobject = curobject.get(part)
+
+			return curobject.get(parts[-1])
+		else:
+			if name in self.scopes[-1]:
+				return self.scopes[-1][name]
+			else:
+				#import pdb; pdb.set_trace()
+				if name in self.root:
+					return self.root[name]
+
+class JSObject:
+	def __init__(self, parent=None, members={}):
+		"""
+		Create a new JSObject, ready to have members added
+		If you pass in a parent, like a javascript prototype, its members are duplicated
+		You can also pass in some extra members to add at the start
+		"""
+		if parent == None:
+			self.members = members
+		else:
+			self.members = dict.copy(parent.members)
+			self.members.update(members)
+
+	def __setitem__(self, name, value):
+		"""
+		Add/update this member on this object
+		"""
+		self.members[name] = value
+
+	def __getitem__(self, name):
+		"""
+		Return this member
+		"""
+		return self.members[name]
+	def __contains__(self, name):
+		return name in self.members
+
+def _crawlFunctions(env, code):
+	#import pdb; pdb.set_trace()
 	for node in code:
 		if node.type=='FUNCTION':
-			name=namespace+"."+node.name
-			ret[name]=node
-	return ret
+			env.set(node.name, node)
+		elif node.type=='VAR' and node[0].initializer.type=='FUNCTION':
+			env.set(node[0].name, node[0].initializer)
+		elif node.type=='SEMICOLON' and node.expression and node.expression.type=='ASSIGN':
+			if node.expression[0].type == 'DOT':
+				name='.'.join([x.value for x in node.expression[0]])
+			else:
+				name = node.expression[0].value
+
+			if node.expression[1].type == 'FUNCTION':
+				env.set(name, node.expression[1])
+			elif node.expression[1].type == 'IDENTIFIER':
+				if node.expression[0].type == 'DOT':
+					fromname='.'.join([x.value for x in node.expression[1]])
+				else:
+					fromname = node.expression[1].value
+				env.set(name, env.get(fromname))
+	return env
 
 def _crawlCalls(namespace, code):
 	CHILD_ATTRS = ['thenPart', 'elsePart', 'expression', 'body', 'initializer']
@@ -173,9 +311,13 @@ def replaceIdentifiers(librarytext, body, replacements, retval):
 
 
 def inlineSingle(inputtext, librarytext):
+	window = JSObject()
+	window['window'] = window
+	env = JSEnvironment(window, window)	# window is root and this
+
 	library = jsparser.parse(librarytext)
 
-	functions = _crawlFunctions('window', library)
+	functions = _crawlFunctions(env, library)
 
 	class Crawler():
 		CHILD_ATTRS = ['thenPart', 'elsePart', 'expression', 'body', 'initializer']
@@ -253,9 +395,10 @@ def inlineSingle(inputtext, librarytext):
 					crawlexpression(piece)
 
 		def replacecall(self, call, name, usesReturn):
-			if not 'window.'+call[0].value in functions:
+			#import pdb; pdb.set_trace()
+			function = env.get(call[0].value)
+			if function == None:
 				return
-			function = functions['window.'+call[0].value]
 			arguments = ['"'+node.value+'"' if node.type=='STRING' else node.value for node in call[1]]
 			functionout = inlineFunction(self.librarytext, function, arguments, name)
 			if functionout.needsRetVal:

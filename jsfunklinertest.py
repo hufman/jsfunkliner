@@ -188,6 +188,112 @@ class TestUnrolling(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, '')
 		self.assertEqual(expected, output)
 
+class TestVar(unittest.TestCase):
+	def test_varsinglecall(self):
+		library="var log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }"
+		input='log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_varsinglecallelse(self):
+		library="var log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); else window.alert(message) }"
+		input='log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\"); else window.alert(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_varsinglecallbrace(self):
+		library="var log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(message); } }"
+		input='log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(\"This is a test\"); }"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_globalsinglecall(self):
+		library="log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }"
+		input='log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_globalsinglecallelse(self):
+		library="log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); else window.alert(message) }"
+		input='log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\"); else window.alert(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_globalsinglecallbrace(self):
+		library="log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(message); } }"
+		input='log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(\"This is a test\"); }"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_windowsinglecall(self):
+		library="window.log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }"
+		input='log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_windowsinglecallelse(self):
+		library="window.log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); else window.alert(message) }"
+		input='log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\"); else window.alert(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_windowsinglecallbrace(self):
+		library="window.log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(message); } }"
+		input='log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(\"This is a test\"); }"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_varwindowsinglecall(self):
+		library="log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }"
+		input='window.log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_varwindowsinglecallelse(self):
+		library="log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); else window.alert(message) }"
+		input='window.log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\"); else window.alert(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_varlocalwindowsinglecallbrace(self):
+		library="var log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(message); } }"
+		input='window.log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(\"This is a test\"); }"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_varlocalwindowsinglecall(self):
+		library="var log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }"
+		input='window.log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_varlocalwindowsinglecallelse(self):
+		library="var log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); else window.alert(message) }"
+		input='window.log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\"); else window.alert(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_varwindowsinglecallbrace(self):
+		library="log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(message); } }"
+		input='window.log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(\"This is a test\"); }"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
 if __name__ == '__main__':
 	if len(sys.argv)>1:
 		found = False

@@ -137,8 +137,22 @@ def _crawlFunctions(env, code):
 	for node in code:
 		if node.type=='FUNCTION':
 			env.set(node.name, node)
-		elif node.type=='VAR' and node[0].initializer.type=='FUNCTION':
-			env.set(node[0].name, node[0].initializer)
+		elif node.type=='VAR':
+			name = node[0].value
+			if node[0].initializer.type=='FUNCTION':
+				env.set(name, node[0].initializer)
+			elif node[0].initializer.type=='OBJECT_INIT':
+				newthis = JSObject()
+				env.set(node[0].name, newthis)
+				env.pushThis(newthis)
+				_crawlFunctions(env, node[0].initializer)
+				env.popThis()
+			else:
+				if node[0].initializer.type == 'DOT':
+					fromname='.'.join([x.value for x in node[0].initializer])
+				else:
+					fromname = node[0].initializer.value
+				env.set(name, env.get(fromname))
 		elif node.type=='SEMICOLON' and node.expression and node.expression.type=='ASSIGN':
 			if node.expression[0].type == 'DOT':
 				name='.'.join([x.value for x in node.expression[0]])
@@ -153,12 +167,6 @@ def _crawlFunctions(env, code):
 				else:
 					fromname = node.expression[1].value
 				env.set(name, env.get(fromname))
-		elif node.type=='VAR' and node[0].initializer.type=='OBJECT_INIT':
-			newthis = JSObject()
-			env.set(node[0].name, newthis)
-			env.pushThis(newthis)
-			_crawlFunctions(env, node[0].initializer)
-			env.popThis()
 		elif node.type=='PROPERTY_INIT' and node[0].type=='IDENTIFIER' and node[1].type=='FUNCTION':
 			env.set("this."+node[0].value, node[1])
 	return env

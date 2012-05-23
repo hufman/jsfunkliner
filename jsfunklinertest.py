@@ -190,15 +190,18 @@ class TestUnrolling(unittest.TestCase):
 
 if __name__ == '__main__':
 	if len(sys.argv)>1:
+		found = False
 		wanted=sys.argv[1]
-		if hasattr(TestBasic,wanted):
-			case = TestBasic(wanted)
-			case.run()
-		else:
-			if hasattr(TestUnrolling,wanted):
-				case = TestUnrolling(wanted)
-				case.run()
-			else:
-				print("Invalid testcase: "+sys.argv[1])
+		suitename = None
+		case = None
+		for suitename in globals():
+			if suitename[0:4] == 'Test':
+				if hasattr(globals()[suitename], wanted):
+					found = True
+					case = globals()[suitename](wanted)
+					case.run()
+					break
+		if not found:
+			print("Invalid testcase: "+sys.argv[1])
 	else:
 		unittest.main()

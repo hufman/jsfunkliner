@@ -18,7 +18,7 @@ class JSEnvironment:
 		"""
 		Change the current this object, saving the old one for a future pop
 		"""
-		self.this.push(this)
+		self.this.append(newthis)
 
 	def popThis(self):
 		"""
@@ -36,7 +36,7 @@ class JSEnvironment:
 		"""
 		Change the current local scope, saving the old scope for a future pop
 		"""
-		self.scopes.push({})
+		self.scopes.append({})
 
 	def popScope(self):
 		"""
@@ -59,7 +59,9 @@ class JSEnvironment:
 		"""
 		parts=name.split('.')
 		if len(parts)>1:
-			if parts[0] in self.scopes[-1]:
+			if parts[0] == 'this':
+				curobject = self.this[-1]
+			elif parts[0] in self.scopes[-1]:
 				curobject = self.scopes[-1][parts[0]]
 			else:
 				curobject = self.root[parts[0]]
@@ -73,7 +75,7 @@ class JSEnvironment:
 				self.scopes[-1][name] = value
 			else:
 				self.root[name] = value
-			
+
 
 	def get(self, name):
 		"""
@@ -84,7 +86,9 @@ class JSEnvironment:
 		"""
 		parts=name.split('.')
 		if len(parts)>1:
-			if parts[0] in self.scopes[-1]:
+			if parts[0] == 'this':
+				curobject = self.this[-1]
+			elif parts[0] in self.scopes[-1]:
 				curobject = self.scopes[-1][parts[0]]
 			else:
 				curobject = self.root[parts[0]]
@@ -149,6 +153,14 @@ def _crawlFunctions(env, code):
 				else:
 					fromname = node.expression[1].value
 				env.set(name, env.get(fromname))
+		elif node.type=='VAR' and node[0].initializer.type=='OBJECT_INIT':
+			newthis = JSObject()
+			env.set(node[0].name, newthis)
+			env.pushThis(newthis)
+			_crawlFunctions(env, node[0].initializer)
+			env.popThis()
+		elif node.type=='PROPERTY_INIT' and node[0].type=='IDENTIFIER' and node[1].type=='FUNCTION':
+			env.set("this."+node[0].value, node[1])
 	return env
 
 def _crawlCalls(namespace, code):

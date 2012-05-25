@@ -96,7 +96,7 @@ class JSEnvironment:
 			for part in parts[1:-1]:
 				curobject = curobject.get(part)
 
-			return curobject.get(parts[-1])
+			return curobject[parts[-1]]
 		else:
 			if name in self.scopes[-1]:
 				return self.scopes[-1][name]
@@ -106,7 +106,7 @@ class JSEnvironment:
 					return self.root[name]
 
 class JSObject:
-	def __init__(self, parent=None, members={}):
+	def __init__(self, function=None, parent=None, members={}):
 		"""
 		Create a new JSObject, ready to have members added
 		If you pass in a parent, like a javascript prototype, its members are duplicated
@@ -117,6 +117,7 @@ class JSObject:
 		else:
 			self.members = dict.copy(parent.members)
 			self.members.update(members)
+		self.function = function
 
 	def __setitem__(self, name, value):
 		"""
@@ -131,16 +132,24 @@ class JSObject:
 		return self.members[name]
 	def __contains__(self, name):
 		return name in self.members
+	def getFunction(self):
+		return self.function
+
+def _crawlIdentifier(object, valuename):
+	if object.type=='IDENTIFIER':
+		return getattr(object, valuename)
+	if object.type=='DOT':
+		return _crawlIdentifier(object[0], valuename) + "." + _crawlIdentifier(object[1], valuename)
 
 def _crawlFunctions(env, code):
 	#import pdb; pdb.set_trace()
 	for node in code:
 		if node.type=='FUNCTION':
-			env.set(node.name, node)
+			env.set(node.name, JSObject(node))
 		elif node.type=='VAR':
 			name = node[0].value
 			if node[0].initializer.type=='FUNCTION':
-				env.set(name, node[0].initializer)
+				env.set(name, JSObject(node[0].initializer))
 			elif node[0].initializer.type=='OBJECT_INIT':
 				newthis = JSObject()
 				env.set(node[0].name, newthis)
@@ -148,27 +157,26 @@ def _crawlFunctions(env, code):
 				_crawlFunctions(env, node[0].initializer)
 				env.popThis()
 			else:
-				if node[0].initializer.type == 'DOT':
-					fromname='.'.join([x.value for x in node[0].initializer])
-				else:
-					fromname = node[0].initializer.value
+				fromname = _crawlIdentifier(node[0].initializer, 'value')
 				env.set(name, env.get(fromname))
 		elif node.type=='SEMICOLON' and node.expression and node.expression.type=='ASSIGN':
-			if node.expression[0].type == 'DOT':
-				name='.'.join([x.value for x in node.expression[0]])
-			else:
-				name = node.expression[0].value
-
-			if node.expression[1].type == 'FUNCTION':
-				env.set(name, node.expression[1])
-			elif node.expression[1].type == 'IDENTIFIER':
-				if node.expression[0].type == 'DOT':
-					fromname='.'.join([x.value for x in node.expression[1]])
-				else:
-					fromname = node.expression[1].value
+			name = _crawlIdentifier(node.expression[0], 'value')
+			if node.expression[1].type == 'FUNCTION':		# x = function() {}
+				env.set(name, JSObject(node.expression[1]))
+			elif node.expression[1].type == 'IDENTIFIER':		# x = x;
+				fromname = _crawlIdentifier(node.expression[1], 'value')
 				env.set(name, env.get(fromname))
+			elif node.expression[1].type=='OBJECT_INIT':		# x = {}
+				newthis = JSObject()
+				env.set(name, newthis)
+				env.pushThis(newthis)
+				_crawlFunctions(env, node.expression[1])
+				env.popThis()
+			elif node.expression[1].type == 'NEW':			# x = new a
+				fromname = _crawlIdentifier(node.expression[1][0], 'value') + ".prototype"
+				env.set(name, JSObject(None, env.get(fromname)))
 		elif node.type=='PROPERTY_INIT' and node[0].type=='IDENTIFIER' and node[1].type=='FUNCTION':
-			env.set("this."+node[0].value, node[1])
+			env.set("this."+node[0].value, JSObject(node[1]))
 	return env
 
 def _crawlCalls(namespace, code):
@@ -417,10 +425,10 @@ def inlineSingle(inputtext, librarytext):
 		def replacecall(self, call, name, usesReturn):
 			#import pdb; pdb.set_trace()
 			function = env.get(call[0].value)
-			if function == None:
+			if function == None or function.getFunction() == None:
 				return
 			arguments = ['"'+node.value+'"' if node.type=='STRING' else node.value for node in call[1]]
-			functionout = inlineFunction(self.librarytext, function, arguments, name)
+			functionout = inlineFunction(self.librarytext, function.getFunction(), arguments, name)
 			if functionout.needsRetVal:
 				self.preput+=functionout.getOutput()
 				self.output.append(self.inputtext[self.inputoffset:call.start])

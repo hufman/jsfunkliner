@@ -317,7 +317,6 @@ class TestObject(unittest.TestCase):
 		self.assertEqual(expected, output)
 
 class TestAssignment(unittest.TestCase):
-
 	def test_varasssinglecall(self):
 		library="var log = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }; var log2 = log"
 		input='log2("This is a test")'
@@ -359,6 +358,29 @@ class TestAssignment(unittest.TestCase):
 		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(\"This is a test\"); }"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+
+class TestNewObject(unittest.TestCase):
+	def test_newobjectsinglecall(self):
+		library="object = function(){}; object.prototype={log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) } }; object2 = new object()"
+		input='object2.log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_newobjectsinglecallelse(self):
+		library="object = function(){}; object.prototype={log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); else window.alert(message) } }; object2 = new object()"
+		input='object2.log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\"); else window.alert(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_newobjectsinglecallbrace(self):
+		library="object = function(){}; object.prototype={log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(message); } } }; object2 = new object()"
+		input='object2.log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(\"This is a test\"); }"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
 if __name__ == '__main__':
 	if len(sys.argv)>1:
 		found = False

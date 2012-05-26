@@ -106,17 +106,18 @@ class JSEnvironment:
 					return self.root[name]
 
 class JSObject:
-	def __init__(self, function=None, parent=None, members={}):
+	def __init__(self, function=None, parent=None, members=None):
 		"""
 		Create a new JSObject, ready to have members added
 		If you pass in a parent, like a javascript prototype, its members are duplicated
 		You can also pass in some extra members to add at the start
 		"""
 		if parent == None:
-			self.members = members
+			self.members = members if members else {}
 		else:
 			self.members = dict.copy(parent.members)
-			self.members.update(members)
+			if members:
+				self.members.update(members)
 		self.function = function
 
 	def __setitem__(self, name, value):

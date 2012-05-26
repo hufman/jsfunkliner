@@ -388,6 +388,9 @@ class TestNewThis(unittest.TestCase):
 		expected='object2.reallog("This is a test")'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
 
 	def test_newthisobjectsinglecallelse(self):
 		library="object = function(){}; object.prototype={log : function(message) {this.reallog(message);}, reallog: function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); else window.alert(message) } }; object2 = new object()"
@@ -395,12 +398,18 @@ class TestNewThis(unittest.TestCase):
 		expected='object2.reallog("This is a test")'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\"); else window.alert(\"This is a test\")"
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
 
 	def test_newthisobjectsinglecallbrace(self):
 		library="object = function(){}; object.prototype={log : function(message) {this.reallog(message);}, reallog : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(message); } } }; object2 = new object()"
 		input='object2.log("This is a test")'
 		expected='object2.reallog("This is a test")'
 		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') { console.log(\"This is a test\"); }"
+		output=jsfunkliner.inlineSingle(output, library)
 		self.assertEqual(expected, output)
 
 if __name__ == '__main__':

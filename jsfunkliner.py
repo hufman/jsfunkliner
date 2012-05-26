@@ -96,7 +96,8 @@ class JSEnvironment:
 			for part in parts[1:-1]:
 				curobject = curobject.get(part)
 
-			return curobject[parts[-1]]
+			if parts[-1] in curobject:
+				return curobject[parts[-1]]
 		else:
 			if name in self.scopes[-1]:
 				return self.scopes[-1][name]

@@ -309,7 +309,7 @@ def replaceIdentifiers(librarytext, body, replacements, retval):
 				self.walkexpressionpiece(expression)
 		def walkexpressionpiece(self, piece):
 			#print("Looking at expression piece "+str(piece));
-			if piece.type=='IDENTIFIER':
+			if piece.type=='IDENTIFIER' or piece.type=='THIS':
 				self.replaceIdentifier(piece)
 			elif piece.type=='CALL':
 				self.walkexpression(piece)
@@ -424,13 +424,19 @@ def inlineSingle(inputtext, librarytext):
 				elif len(piece):
 					crawlexpression(piece)
 
-		def replacecall(self, call, name, usesReturn):
+		def replacecall(self, call, retname, usesReturn):
 			#import pdb; pdb.set_trace()
-			function = env.get(call[0].value)
+			funname = _crawlIdentifier(call[0], 'value')
+			function = env.get(funname)
 			if function == None or function.getFunction() == None:
 				return
 			arguments = ['"'+node.value+'"' if node.type=='STRING' else node.value for node in call[1]]
-			functionout = inlineFunction(self.librarytext, function.getFunction(), arguments, name)
+			replacements={}
+			for i in range(0, len(arguments)):
+				replacements[function.getFunction().params[i]] = arguments[i]
+			if len(funname.split('.'))>1:
+				replacements['this']='.'.join(funname.split('.')[0:-1])
+			functionout = replaceIdentifiers(self.librarytext, function.getFunction().body, replacements, retname)
 			if functionout.needsRetVal:
 				self.preput+=functionout.getOutput()
 				self.output.append(self.inputtext[self.inputoffset:call.start])

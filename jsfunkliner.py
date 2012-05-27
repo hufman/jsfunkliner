@@ -136,6 +136,8 @@ class JSObject:
 		return name in self.members
 	def getFunction(self):
 		return self.function
+	def keys(self):
+		return self.members.keys()
 
 def _crawlIdentifier(object, valuename):
 	if object.type=='IDENTIFIER':
@@ -208,7 +210,7 @@ def inlineFunction(librarytext, function, arguments, retval):
 		replacements[params[i]] = arguments[i]
 	return replaceIdentifiers(librarytext, function.body, replacements, retval)
 
-def replaceIdentifiers(librarytext, body, replacements, retval):
+def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 	"""
 	Given a jsparse'd body object and a map of replacements,
 	replace any identifiers that are found in the replacements map
@@ -216,7 +218,7 @@ def replaceIdentifiers(librarytext, body, replacements, retval):
 	If it is a function, special code happens for the return
 	Note: Only supports a single return as the last line of the function, if any return at all
 
-	If it is a single line function that returns stuff, .needsRetVal == False
+	If it is a single line function that returns stuff, .needsRetVal == False, unless forceretval
 	If it is a multi-line function that returns stuff, .needsRetVal == True and .retval will contain the variable name to use
 		The retval passed to the replaceIdentifiers function can be None, in which case any return lines are deleted
 			This is used for calls that don't use the return
@@ -233,11 +235,11 @@ def replaceIdentifiers(librarytext, body, replacements, retval):
 				firstline=body
 			self.inputoffset=firstline.start
 			self.librarytext=librarytext
-			self.retval = retval
+			self.retval=retval
 
-			if firstline.type!='RETURN' and self.retval != None:
+			if (forceretval or firstline.type!='RETURN') and retval != None:
 				self.needsRetVal=True
-				self.output.append('var %s = undefined;\n'%self.retval)
+				self.output.append('var %s = undefined;\n'%retval)
 			else:
 				self.needsRetVal=False
 			oldoffset=self.inputoffset
@@ -265,8 +267,8 @@ def replaceIdentifiers(librarytext, body, replacements, retval):
 			if statement.type == "RETURN":
 				self.output.append(self.librarytext[self.inputoffset:statement.start])
 				self.inputoffset=statement.value.start
-				if self.needsRetVal and self.retval != None:
-					self.output.append("%s = "%self.retval)
+				if self.needsRetVal and retval != None:
+					self.output.append("%s = "%retval)
 					self.walkexpression(statement.value)
 					self.output.append(self.librarytext[self.inputoffset:statement.end])
 					self.inputoffset = statement.end
@@ -376,6 +378,7 @@ def inlineSingle(inputtext, librarytext):
 						self.callcount = 0
 						self.preput = ''
 						self.output.append(self.inputtext[self.inputoffset:statement.start])
+						self.inputoffset = statement.start
 						index = len(self.output)
 						self.walkexpression(child, name, True)
 						if len(self.preput)>0:
@@ -392,8 +395,10 @@ def inlineSingle(inputtext, librarytext):
 						self.walkexpression(child, name, False)
 						if len(self.preput)>0:
 							self.output.insert(index, self.preput)
+					continue
 				elif statement.type == 'CALL':
 					self.replacefunction(statement, statement[0].value)
+					continue
 				elif statement.type == 'FOR':
 					self.unloopFor(statement)
 					continue
@@ -426,6 +431,10 @@ def inlineSingle(inputtext, librarytext):
 
 		def replacecall(self, call, retname, usesReturn):
 			#import pdb; pdb.set_trace()
+			if call[0].type=='INDEX':
+				self.replacecallswitch(call, retname, usesReturn)
+				return
+
 			funname = _crawlIdentifier(call[0], 'value')
 			function = env.get(funname)
 			if function == None or function.getFunction() == None:
@@ -436,7 +445,7 @@ def inlineSingle(inputtext, librarytext):
 				replacements[function.getFunction().params[i]] = arguments[i]
 			if len(funname.split('.'))>1:
 				replacements['this']='.'.join(funname.split('.')[0:-1])
-			functionout = replaceIdentifiers(self.librarytext, function.getFunction().body, replacements, retname)
+			functionout = replaceIdentifiers(self.librarytext, function.getFunction().body, replacements, retname, False)
 			if functionout.needsRetVal:
 				self.preput+=functionout.getOutput()
 				self.output.append(self.inputtext[self.inputoffset:call.start])
@@ -450,6 +459,57 @@ def inlineSingle(inputtext, librarytext):
 					self.output.append(self.inputtext[self.inputoffset:call.start])
 					self.output.append(functionout.getOutput())
 				self.inputoffset = call.end
+
+		def replacecallswitch(self, call, retname, usesReturn):
+			#import pdb; pdb.set_trace()
+			objectname = _crawlIdentifier(call[0][0], 'value')
+			keyvariable = _crawlIdentifier(call[0][1], 'value')
+
+			object = env.get(objectname)
+			if object == None:
+				return
+
+			switchoutput=[]
+			switchoutput.append("switch (%s) {\n"%keyvariable)
+
+			needsRetVal = False
+			for key in object.keys():
+				if object[key].getFunction()!=None:
+					switchoutput.append('	case "%s":\n'%key)
+
+					function=object[key].getFunction()
+					arguments = ['"'+node.value+'"' if node.type=='STRING' else str(node.value) for node in call[1]]
+					replacements={}
+					for i in range(0, len(arguments)):
+						replacements[function.params[i]] = arguments[i]
+					replacements['this'] = objectname
+					functionout = replaceIdentifiers(self.librarytext, function.body, replacements, retname, True)
+					needsRetVal = needsRetVal or functionout.needsRetVal
+					switchoutput.append(functionout.getOutput())
+					# If the function doesn't have a retval, add ending bits
+					if not needsRetVal:
+						switchoutput.append(';\n')
+					switchoutput.append('\tbreak;\n')
+			switchoutput.append("	default:\n	%s[%s](%s);\n}"%(objectname, keyvariable, ', '.join(arguments)))
+
+			if needsRetVal:
+				self.preput+=''.join(switchoutput)+"\n"
+				self.output.append(self.inputtext[self.inputoffset:call.start])
+				self.output.append(retname)
+				self.inputoffset = call.end
+			else:
+				if not usesReturn:
+					self.output.append(self.inputtext[self.inputoffset:call.start])
+					self.output.append(''.join(switchoutput))
+				else:
+					# Should never happen
+					print("Impossible")
+				self.inputoffset = call.end
+
+				# Ignore any semicolons after non-return switches
+				self.inputoffset+=1
+				if self.inputoffset<len(self.inputtext) and (self.inputtext[self.inputoffset]==';' or self.inputtext[self.inputoffset]==' '):
+					self.inputoffset+=1
 
 		def unloopFor(self, loop):
 			variable=None	# variable to replace
@@ -537,7 +597,7 @@ def inlineSingle(inputtext, librarytext):
 			self.output.append(self.inputtext[self.inputoffset:loop.start])
 			self.inputoffset = loop.body.end
 			while not stop(cur):
-				bodyout = replaceIdentifiers(self.inputtext, loop.body, {"i":cur}, None)
+				bodyout = replaceIdentifiers(self.inputtext, loop.body, {"i":cur}, None, False)
 				self.output.append(bodyout.getOutput())
 				cur += step
 				if len(loop.body):

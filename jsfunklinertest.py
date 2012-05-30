@@ -426,6 +426,14 @@ class TestSwitch(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 
+class TestDef(unittest.TestCase):
+	def test_def(self):
+		library="object = function(){}; object.prototype={reallog : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) } }; object2 = new object()"
+		input='object.prototype.log = function(message) {this.reallog(message);}'
+		expected="object.prototype.log = function(message) {if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
 if __name__ == '__main__':
 	if len(sys.argv)>1:
 		found = False

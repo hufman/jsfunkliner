@@ -140,6 +140,8 @@ class JSObject:
 		return self.members.keys()
 
 def _crawlIdentifier(object, valuename):
+	if object.type=='THIS':
+		return 'this'
 	if object.type=='IDENTIFIER':
 		return getattr(object, valuename)
 	if object.type=='DOT':
@@ -374,7 +376,7 @@ def inlineSingle(inputtext, librarytext):
 				if statement.type == "VAR":	# create a new variable
 					child = getattr(statement[0], 'initializer', None)
 					if child:
-						name = statement[0].value
+						name = _crawlIdentifier(statement[0], 'value')
 						self.callcount = 0
 						self.preput = ''
 						self.output.append(self.inputtext[self.inputoffset:statement.start])
@@ -386,7 +388,10 @@ def inlineSingle(inputtext, librarytext):
 				elif statement.type == 'SEMICOLON':
 					child = getattr(statement, 'expression', None)
 					if child:
-						name = statement.value
+						if statement.expression.type=='ASSIGN':
+							name = _crawlIdentifier(statement.expression[0], 'value')
+						else:
+							name = statement.value
 						self.callcount = 0
 						self.preput = ''
 						self.output.append(self.inputtext[self.inputoffset:statement.start])
@@ -412,6 +417,7 @@ def inlineSingle(inputtext, librarytext):
 			self.inputoffset=branch.end
 
 		def walkexpression(self, expression, name, usesReturn):
+			#import pdb; pdb.set_trace()
 			if expression.type=='CALL':
 				retname = 'ret'+name+str(self.callcount)
 				if not usesReturn:
@@ -419,7 +425,16 @@ def inlineSingle(inputtext, librarytext):
 				self.replacecall(expression, retname, usesReturn)
 				self.callcount+=1
 				return
-			for piece in expression:
+			elif expression.type=='ASSIGN' and expression[1].type=='FUNCTION':	# defining a new function and assigning it to a variable
+				parent = '.'.join(name.split('.')[0:-1])
+				parentobj = env.get(parent)
+				env.pushThis(parentobj)
+				env.pushScope()
+				self.walkbranch(expression[1].body)
+				env.popScope()
+				env.popThis()
+				return
+			for piece in expression:		# for each part of a line
 				if piece.type=='CALL':
 					retname = 'ret'+name+str(self.callcount)
 					if not usesReturn:
@@ -427,7 +442,7 @@ def inlineSingle(inputtext, librarytext):
 					self.replacecall(piece, retname, usesReturn)
 					self.callcount+=1
 				elif len(piece):
-					crawlexpression(piece)
+					self.walkbranch(piece)
 
 		def replacecall(self, call, retname, usesReturn):
 			#import pdb; pdb.set_trace()

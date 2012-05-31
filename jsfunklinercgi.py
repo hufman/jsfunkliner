@@ -86,6 +86,18 @@ var loader=function() {
 			'desc':'Two Level Object',
 			'library':'object = function(){};\\nobject.prototype={\\n log : function(message) {\\n  this.reallog(message);\\n },\\n reallog: function (message) {\\n  if (typeof(console) != "undefined" && typeof(console.log) != "undefined")\\n   console.log(message);\\n  else\\n   window.alert(message)\\n }\\n};\\nobject2 = new object();',
 			'snippet':'object2.log("This is a test")'
+	},{
+			'desc':'Single Returns',
+			'library':'function add(one, two) { return one + two; }\\nfunction sub(one, two) { return one - two; }',
+			'snippet':'var final = add(2,3) + add(3,5) + sub(8,1)'
+	},{
+			'desc':'Retval Returns',
+			'library':'function square(one) {\\n var two = one;\\n return one * two;\\n}',
+			'snippet':'var final = square(2) + square(3) + square(4)'
+	},{
+			'desc':'Forloop unrolling',
+			'library':'',
+			'snippet':'var sum = 0;\\nfor (var i=0; i<7; i++) { sum = sum + i; }'
 	}];
 
 	var box = document.getElementById('examples');

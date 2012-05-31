@@ -92,9 +92,13 @@ class JSEnvironment:
 				curobject = self.scopes[-1][parts[0]]
 			else:
 				curobject = self.root[parts[0]]
+			if curobject == None:
+				return None
 
 			for part in parts[1:-1]:
 				curobject = curobject[part]
+				if curobject == None:
+					return None
 
 			if parts[-1] in curobject:
 				return curobject[parts[-1]]
@@ -131,7 +135,7 @@ class JSObject:
 		"""
 		Return this member
 		"""
-		return self.members[name]
+		return self.members[name] if name in self.members else None
 	def __contains__(self, name):
 		return name in self.members
 	def getFunction(self):

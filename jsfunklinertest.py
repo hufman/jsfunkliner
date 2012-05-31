@@ -452,6 +452,20 @@ class TestDef(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 
+class TestPassing(unittest.TestCase):
+	def test_pass(self):
+		library="object = function(){}; object.prototype={reallog : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) } };"
+		input='log = function(logger/*:object*/, message) {logger.reallog(message);}'
+		expected="log = function(logger/*:object*/, message) {if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_passSpace(self):
+		library="object = function(){}; object.prototype={reallog : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) } };"
+		input='log = function(logger /* : object */ , message) {logger.reallog(message);}'
+		expected="log = function(logger /* : object */ , message) {if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
 if __name__ == '__main__':
 	if len(sys.argv)>1:
 		found = False

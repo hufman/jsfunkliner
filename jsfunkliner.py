@@ -4,6 +4,7 @@ import jsparser
 import types
 import traceback
 import sys
+import re
 
 class JSEnvironment:
 	def __init__(self, root, this):
@@ -393,6 +394,21 @@ def inlineSingle(inputtext, librarytext):
 
 			self.walkbranch(script)
 
+		def parsefunctiontypes(self, string):
+			"""
+			Given a string such as variable/*:type*/, othervar /* :mytype */,
+			return a dictionary like {variable:'type', othervar:'mytype'}
+			"""
+			ret = {}
+			params = string.split(',')
+			for param in params:
+				match = re.match(r'([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\/\*\s*:\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\*\/', param)
+				if match is None:
+					continue
+				groups = match.groups()
+				ret[groups[0]] = groups[1]
+			return ret
+
 		def walkbranch(self, branch):
 			if not getattr(branch, 'end', None):
 				branch.end = len(inputtext)
@@ -452,10 +468,20 @@ def inlineSingle(inputtext, librarytext):
 				self.callcount+=1
 				return
 			elif expression.type=='ASSIGN' and expression[1].type=='FUNCTION':	# defining a new function and assigning it to a variable
+				# set up the environment inside the function
 				parent = '.'.join(name.split('.')[0:-1])
 				parentobj = env.get(parent)
 				env.pushThis(parentobj)
 				env.pushScope()
+
+				# handle any defined variables
+				signature = self.inputtext[self.inputtext.find('(',expression[1].start)+1 : self.inputtext.find(')',expression[1].start)]
+				params = self.parsefunctiontypes(signature)
+				for param in params.keys():
+					fromname = params[param] + ".prototype"
+					env.createLocal(param)
+					env.set(param, JSObject(None, env.get(fromname)))
+				# walk the function
 				self.walkbranch(expression[1].body)
 				env.popScope()
 				env.popThis()

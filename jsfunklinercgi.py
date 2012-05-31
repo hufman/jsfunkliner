@@ -103,13 +103,8 @@ var loader=function() {
 	var changed = function(e) {
 		var index = this.selectedIndex;
 		var cur = this.childNodes[index];
-		if (library.hasOwnProperty('textContent')) {
-			library.textContent = cur.libraryContent;
-			snippet.textContent = cur.snippetContent;
-		} else {
-			library.innerText = cur.libraryContent;
-			snippet.innerText = cur.snippetContent;
-		}
+		library.value = cur.libraryContent;
+		snippet.value = cur.snippetContent;
 	}
 		
 	if (box.attachEvent) box.attachEvent('onchange', changed);

@@ -106,9 +106,8 @@ var loader=function() {
 		library.value = cur.libraryContent;
 		snippet.value = cur.snippetContent;
 	}
-		
-	if (box.attachEvent) box.attachEvent('onchange', changed);
-	else if (box.addEventListener) box.addEventListener('change', changed, false);
+
+	box.onchange = changed;
 }
 if (window.attachEvent) {window.attachEvent('onload', loader);}
 else if (window.addEventListener) {window.addEventListener('load', loader, false);}

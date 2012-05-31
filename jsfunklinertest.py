@@ -73,6 +73,13 @@ class TestBasic(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 
+	def test_triplecallinline(self):
+		library="function add(one, two) { return one + two; }"
+		input="var final = add(2,3) + add(4,1) + add(40,12)"
+		expected="var final = (2 + 3) + (4 + 1) + (40 + 12)"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
 	def test_multicallinline(self):
 		library="function add(one, two) { return one + two; }\nfunction sub(one, two) { return one - two; }"
 		input="var final = add(2,3) + sub(4,1)"
@@ -98,6 +105,13 @@ class TestBasic(unittest.TestCase):
 		library="function square(one) { var two = one; return one * two; }"
 		input="var final = square(2) + square(3)"
 		expected="var retfinal0 = undefined;\nvar two = 2; retfinal0 = 2 * two;\nvar retfinal1 = undefined;\nvar two = 3; retfinal1 = 3 * two;\nvar final = retfinal0 + retfinal1"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_triplecallretval(self):
+		library="function square(one) { var two = one; return one * two; }"
+		input="var final = square(2) + square(3) + square(4)"
+		expected="var retfinal0 = undefined;\nvar two = 2; retfinal0 = 2 * two;\nvar retfinal1 = undefined;\nvar two = 3; retfinal1 = 3 * two;\nvar retfinal2 = undefined;\nvar two = 4; retfinal2 = 4 * two;\nvar final = retfinal0 + retfinal1 + retfinal2"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 

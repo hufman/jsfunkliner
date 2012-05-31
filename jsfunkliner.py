@@ -494,7 +494,7 @@ def inlineSingle(inputtext, librarytext):
 					self.replacecall(piece, retname, usesReturn)
 					self.callcount+=1
 				elif len(piece):
-					self.walkbranch(piece)
+					self.walkexpression(piece, name, usesReturn)
 
 		def replacecall(self, call, retname, usesReturn):
 			#import pdb; pdb.set_trace()

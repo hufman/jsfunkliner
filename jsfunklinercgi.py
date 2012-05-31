@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
 import cgi
-import cgitb
 import jsfunkliner
 import jsparser
 import sys
+import datetime
+import pprint
 
 jsdata={
 	'library': {
@@ -132,6 +133,20 @@ else {document.addEventListener('load', loader, false);}
 		printContainer('nextoutput')
 	print('<input type="submit" name="single" value="Inline Once"></input>')
 
+def saveInputLog(name, jsdata, other=None):
+	timestamp=datetime.datetime.today().strftime('%Y-%m-%d_%H:%M:%s.%f')
+	name='inliner-%s-%s'%(name, timestamp)
+	output = file('/var/log/inliner/%s'%name, 'w')
+
+	pp = pprint.PrettyPrinter(stream=output)
+	for attr in ['library', 'snippet', 'output', 'nextoutput']:
+		pp.pprint({attr+"old": jsdata[attr]['olddata']})
+		pp.pprint({attr: jsdata[attr]['data']})
+	if other:
+		pp.pprint(other)
+	output.close()
+
+
 # handle input
 data=cgi.FieldStorage();
 for attr in ['library', 'snippet', 'output', 'nextoutput']:
@@ -140,6 +155,7 @@ for attr in ['library', 'snippet', 'output', 'nextoutput']:
 cmd_inlinesingle = data.getfirst('single')
 
 if cmd_inlinesingle:
+	saveInputLog('input', jsdata)
 	try:
 		# if the yuser has changed the input, reset the output
 		if jsdata['library']['data'] != jsdata['library']['olddata'] or \
@@ -159,12 +175,14 @@ if cmd_inlinesingle:
 			jsdata['output']['data'] = output
 		else:
 			jsdata['nextoutput']['data'] = output
+		saveInputLog('output', jsdata)
 	except jsparser.SyntaxError_:
 		error = sys.exc_info()[1].message
 		jsdata['output']['data'] = ''
 		jsdata['nextoutput']['data'] = ''
 	except:
-		cgitb.handler()
+		error = "I will be looking into why this happened.\nThanks for helping my code!"
+		saveInputLog('error', jsdata)
 
 # display output
 printPage()

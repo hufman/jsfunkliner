@@ -67,7 +67,7 @@ class JSEnvironment:
 				curobject = self.root[parts[0]]
 
 			for part in parts[1:-1]:
-				curobject = curobject.get(part)
+				curobject = curobject[part]
 
 			curobject[parts[-1]] = value
 		else:
@@ -94,7 +94,7 @@ class JSEnvironment:
 				curobject = self.root[parts[0]]
 
 			for part in parts[1:-1]:
-				curobject = curobject.get(part)
+				curobject = curobject[part]
 
 			if parts[-1] in curobject:
 				return curobject[parts[-1]]
@@ -151,29 +151,51 @@ def _crawlFunctions(env, code):
 	#import pdb; pdb.set_trace()
 	for node in code:
 		if node.type=='FUNCTION':
-			env.set(node.name, JSObject(node))
+			newthis = env.get(node.name) or JSObject(node)	# create the function object
+			env.set(node.name, newthis)
+			name=node.name+".prototype"
+			newthis = env.get(name) or JSObject()			# create a blank prototype
+			env.set(name, newthis)
+			env.pushThis(newthis)
+			_crawlFunctions(env, node.body)		# crawl the "constructor"
+			env.popThis()
 		elif node.type=='VAR':
 			name = node[0].value
 			if node[0].initializer.type=='FUNCTION':
-				env.set(name, JSObject(node[0].initializer))
+				newthis = env.get(name) or JSObject(node[0].initializer)	# create the function object
+				env.set(name, newthis)
+				name=name+".prototype"
+				newthis = env.get(name) or JSObject()			# create a blank prototype
+				env.set(name, newthis)
+				env.pushThis(newthis)
+				_crawlFunctions(env, node[0].initializer.body)		# crawl the "constructor"
+				env.popThis()
 			elif node[0].initializer.type=='OBJECT_INIT':
-				newthis = JSObject()
+				newthis = env.get(name) or JSObject()
 				env.set(node[0].name, newthis)
 				env.pushThis(newthis)
 				_crawlFunctions(env, node[0].initializer)
 				env.popThis()
 			else:
-				fromname = _crawlIdentifier(node[0].initializer, 'value')
-				env.set(name, env.get(fromname))
+				if node[0].initializer.type=='IDENTIFIER':
+					fromname = _crawlIdentifier(node[0].initializer, 'value')
+					env.set(name, env.get(fromname))
 		elif node.type=='SEMICOLON' and node.expression and node.expression.type=='ASSIGN':
 			name = _crawlIdentifier(node.expression[0], 'value')
 			if node.expression[1].type == 'FUNCTION':		# x = function() {}
-				env.set(name, JSObject(node.expression[1]))
+				newthis = env.get(name) or JSObject(node.expression[1])	# create the function object
+				env.set(name, newthis)
+				name=name+".prototype"
+				newthis = env.get(name) or JSObject()			# create a blank prototype
+				env.set(name, newthis)
+				env.pushThis(newthis)
+				_crawlFunctions(env, node.expression[1].body)		# crawl the "constructor"
+				env.popThis()
 			elif node.expression[1].type == 'IDENTIFIER':		# x = x;
 				fromname = _crawlIdentifier(node.expression[1], 'value')
 				env.set(name, env.get(fromname))
 			elif node.expression[1].type=='OBJECT_INIT':		# x = {}
-				newthis = JSObject()
+				newthis = env.get(name) or JSObject()
 				env.set(name, newthis)
 				env.pushThis(newthis)
 				_crawlFunctions(env, node.expression[1])

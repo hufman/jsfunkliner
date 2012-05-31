@@ -428,7 +428,25 @@ class TestSwitch(unittest.TestCase):
 
 class TestDef(unittest.TestCase):
 	def test_def(self):
-		library="object = function(){}; object.prototype={reallog : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) } }; object2 = new object()"
+		library="object = function(){}; object.prototype={reallog : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) } };"
+		input='object.prototype.log = function(message) {this.reallog(message);}'
+		expected="object.prototype.log = function(message) {if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_new(self):
+		library="object = function(){this.reallog = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }}; object2 = new object()"
+		input='object.prototype.log = function(message) {this.reallog(message);}'
+		expected="object.prototype.log = function(message) {if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_varnew(self):
+		library="var object = function(){this.reallog = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }}; object2 = new object()"
+		input='object.prototype.log = function(message) {this.reallog(message);}'
+		expected="object.prototype.log = function(message) {if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_funnew(self):
+		library="function object(){this.reallog = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }}; object2 = new object()"
 		input='object.prototype.log = function(message) {this.reallog(message);}'
 		expected="object.prototype.log = function(message) {if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);}"
 		output=jsfunkliner.inlineSingle(input, library)

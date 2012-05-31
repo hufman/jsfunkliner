@@ -217,11 +217,11 @@ def _crawlCalls(namespace, code):
 	ret=[]
 	if code.type=='SCRIPT':
 		ret.extend(_crawlCalls(namespace, code[0]))
-		return ret;
+		return ret
 	if code.type=='CALL':	# direct call
 		code[0].value=namespace+'.'+code[0].value
 		ret.append(code)
-		return ret;
+		return ret
 	for node in code:
 		if node.type=='CALL':	# direct call
 			node[0].value=namespace+'.'+node[0].value
@@ -339,7 +339,7 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 			else:
 				self.walkexpressionpiece(expression)
 		def walkexpressionpiece(self, piece):
-			#print("Looking at expression piece "+str(piece));
+			#print("Looking at expression piece "+str(piece))
 			if piece.type=='IDENTIFIER' or piece.type=='THIS':
 				self.replaceIdentifier(piece)
 			elif piece.type=='CALL':

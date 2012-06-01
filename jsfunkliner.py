@@ -324,12 +324,7 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 					elif len(child):
 						self.walkbranch(child, False)
 					else:
-						try:
-							self.walkstatement(child.expression)
-						except:
-							excinfo=sys.exc_info()
-							sys.excepthook(excinfo[0], excinfo[1], excinfo[2])
-							print("unknown type of child: "+str(child))
+						print("unknown type of child: "+str(child))
 			if self.inputoffset < statement.end:
 				#print("Setting offset to "+str(statement.end))
 				self.output.append(self.librarytext[self.inputoffset:statement.end])

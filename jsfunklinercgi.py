@@ -144,9 +144,19 @@ else {document.addEventListener('load', loader, false);}
 	if jsdata['nextoutput']['data']:
 		printContainer('nextoutput')
 	print('<input type="submit" name="single" value="Inline Once"></input>')
+	print("""
+<button id="leavefeedback" type="button">Send Feedback</button>
+<div id="feedbackcontainer">
+<p><label for="feedback_name">Name:</label> <input id="feedback_name" name="name"></input></p>
+<p><label for="feedback_comment">Comment:</label>
+<textarea id="feedback_comment" name="comment" cols="50" rows="7"></textarea></p>
+<input type="submit" name="feedback" value="Submit Feedback"></input>
+</div>
+""")
+
 
 def saveInputLog(name, jsdata, other=None):
-	timestamp=datetime.datetime.today().strftime('%Y-%m-%d_%H:%M:%s.%f')
+	timestamp=datetime.datetime.today().strftime('%Y-%m-%d_%H:%M:%S.%f')
 	name='inliner-%s-%s'%(name, timestamp)
 	output = file('/var/log/inliner/%s'%name, 'w')
 

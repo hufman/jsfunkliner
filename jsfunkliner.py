@@ -346,6 +346,8 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 				pass
 			elif piece.type=='NUMBER':
 				pass
+			elif piece.type in ['TRUE', 'FALSE']:
+				pass
 			elif len(piece):
 				self.walkexpression(piece)
 			else:

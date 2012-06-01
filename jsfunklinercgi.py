@@ -71,6 +71,9 @@ span.label {
 	right: 5px;
 	opacity: 20%;
 }
+#feedbackcontainer {
+	visibility: hidden;
+}
 </style>
 <script type="text/javascript">
 var loader=function() {
@@ -121,6 +124,10 @@ var loader=function() {
 	}
 
 	box.onchange = changed;
+	
+	document.getElementById('leavefeedback').onclick = function(e) {
+		document.getElementById('feedbackcontainer').style.visibility='visible';
+	};
 }
 if (window.attachEvent) {window.attachEvent('onload', loader);}
 else if (window.addEventListener) {window.addEventListener('load', loader, false);}
@@ -175,6 +182,7 @@ for attr in ['library', 'snippet', 'output', 'nextoutput']:
 	jsdata[attr]['data'] = data.getfirst(attr, '')
 	jsdata[attr]['olddata'] = data.getfirst('old' + attr, '')
 cmd_inlinesingle = data.getfirst('single')
+cmd_feedback = data.getfirst('feedback')
 
 if cmd_inlinesingle:
 	saveInputLog('input', jsdata)
@@ -205,6 +213,16 @@ if cmd_inlinesingle:
 	except:
 		error = "I will be looking into why this happened.\nThanks for helping my code!"
 		saveInputLog('error', jsdata)
+	# display output
+	printPage()
 
-# display output
-printPage()
+if cmd_feedback:
+	feedback={
+		'name': data.getfirst('name'),
+		'comment': data.getfirst('comment')
+	}
+	saveInputLog('feedback', jsdata, {'feedback':feedback})
+	# display output
+	printPage()
+	print('<p>Thanks! Your feedback has been saved</p>')
+

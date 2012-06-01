@@ -25,7 +25,7 @@ class JSEnvironment:
 		"""
 		Delete the current this object and revert to the previous
 		"""
-		return self.this.pop
+		return self.this.pop()
 
 	def getThis(self):
 		"""

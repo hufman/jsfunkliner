@@ -465,6 +465,12 @@ class TestDef(unittest.TestCase):
 		expected="object.prototype.log = function(message) {if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_newdouble(self):
+		library="object = function(){this.reallog = function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }; this.reallog2 = function (message) { if (typeof(console) != 'undefined' && 'log' in console) console.log(message) }}; object2 = new object()"
+		input='object.prototype.log = function(message) {this.reallog2(message);}'
+		expected="object.prototype.log = function(message) {if (typeof(console) != 'undefined' && 'log' in console) console.log(message);}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 class TestPassing(unittest.TestCase):
 	def test_pass(self):

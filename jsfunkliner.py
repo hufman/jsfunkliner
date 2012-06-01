@@ -439,7 +439,7 @@ def inlineSingle(inputtext, librarytext):
 						self.output.append(self.inputtext[self.inputoffset:statement.start])
 						self.inputoffset=statement.start
 						index = len(self.output)
-						self.walkexpression(child, name, False)
+						self.walkexpression(child, name, True if statement.expression.type=='ASSIGN' else False)
 						if len(self.preput)>0:
 							self.output.insert(index, self.preput)
 					continue
@@ -447,7 +447,9 @@ def inlineSingle(inputtext, librarytext):
 					self.replacefunction(statement, statement[0].value)
 					continue
 				elif statement.type == 'FOR':
-					self.unloopFor(statement)
+					worked = self.unloopFor(statement)
+					if not worked:
+						self.walkbranch(statement.body)
 					continue
 				#else:
 					#print("Unknown type of statement: "+str(statement))
@@ -645,7 +647,7 @@ def inlineSingle(inputtext, librarytext):
 			# check that we parsed everything validly
 			if start is None or step is None or stop is None:
 				# could not parse something
-				return
+				return False
 
 			# how many iterations in the loop
 			iterations = 0
@@ -656,7 +658,7 @@ def inlineSingle(inputtext, librarytext):
 				cur += step
 			if iterations >= maxiterations:
 				# too many loop unwinds
-				return
+				return False
 
 			# Do the unwinding
 			iterations = 0
@@ -671,6 +673,7 @@ def inlineSingle(inputtext, librarytext):
 					self.output.append(self.inputtext[loop.body[len(loop.body)-1].end:loop.end-1])
 				if not stop(cur):
 					self.output.append('\n')
+			return True
 
 		def getOutput(self):
 			return ''.join(self.output)

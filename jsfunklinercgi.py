@@ -101,6 +101,10 @@ var loader=function() {
 			'desc':'Forloop unrolling',
 			'library':'',
 			'snippet':'var sum = 0;\\nfor (var i=0; i<7; i++) { sum = sum + i; }'
+	},{
+			'desc':'Advanced objects',
+			'library':'myobject = function(){};\\nmyobject.prototype={reallog: function (message) {\\n if (typeof(console) != "undefined" && typeof(console.log) != "undefined")\\n  console.log(message)\\n }\\n};',
+			'snippet':'log = function(logger /*:myobject*/ , message) {\\n logger.reallog(message);\\n}'
 	}];
 
 	var box = document.getElementById('examples');
@@ -144,7 +148,7 @@ else {document.addEventListener('load', loader, false);}
 	printContainer('library')
 	printContainer('snippet')
 	if error:
-		print('<p class="error">A syntax error occurred:<br>')
+		print('<p class="error">An error occurred:<br>')
 		print(error.replace('\n','<br />') + "</p>")
 	if jsdata['output']['data']:
 		printContainer('output')
@@ -216,7 +220,7 @@ if cmd_inlinesingle:
 	# display output
 	printPage()
 
-if cmd_feedback:
+elif cmd_feedback:
 	feedback={
 		'name': data.getfirst('name'),
 		'comment': data.getfirst('comment')
@@ -226,3 +230,5 @@ if cmd_feedback:
 	printPage()
 	print('<p>Thanks! Your feedback has been saved</p>')
 
+else:
+	printPage();

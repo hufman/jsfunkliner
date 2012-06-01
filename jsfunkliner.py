@@ -295,6 +295,9 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 			#print("Looking at statement "+str(statement))
 			if statement.type == "RETURN":
 				self.output.append(self.librarytext[self.inputoffset:statement.start])
+				if not isinstance(statement.value, jsparser.Node):
+					self.inputoffset = statement.end
+					return		# not actually returning any value
 				self.inputoffset=statement.value.start
 				if self.needsRetVal and retval != None:
 					self.output.append("%s = "%retval)

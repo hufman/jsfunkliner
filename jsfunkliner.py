@@ -677,3 +677,14 @@ def inlineSingle(inputtext, librarytext):
 
 	crawler = Crawler(inputtext, librarytext, library)
 	return crawler.getOutput()
+
+if __name__ == '__main__':
+	if len(sys.argv)==3:
+		libraryname = sys.argv[1]
+		snippetname = sys.argv[2]
+		library = file(libraryname, 'r').read()
+		snippet = file(snippetname, 'r').read()
+		output = inlineSingle(snippet, library)
+		print(output)
+	else:
+		print("Usage: %s libraryfilename snippetfilename"%sys.argv[0])

@@ -500,7 +500,8 @@ def inlineSingle(inputtext, librarytext):
 
 		def replacecall(self, call, retname, usesReturn):
 			#import pdb; pdb.set_trace()
-			if call[0].type=='INDEX':
+			if call[0].type=='INDEX' or \
+			  (call[0].type=='DOT' and call[0][0].type=='INDEX'):
 				self.replacecallswitch(call, retname, usesReturn)
 				return
 
@@ -531,8 +532,12 @@ def inlineSingle(inputtext, librarytext):
 
 		def replacecallswitch(self, call, retname, usesReturn):
 			#import pdb; pdb.set_trace()
-			objectname = _crawlIdentifier(call[0][0], 'value')
-			keyvariable = _crawlIdentifier(call[0][1], 'value')
+			if call[0].type=='DOT' and call[0][0].type=='INDEX':
+				objectname = _crawlIdentifier(call[0][0][0], 'value')
+				keyvariable = _crawlIdentifier(call[0][0][1], 'value')
+			else:
+				objectname = _crawlIdentifier(call[0][0], 'value')
+				keyvariable = _crawlIdentifier(call[0][1], 'value')
 
 			object = env.get(objectname)
 			if object == None:
@@ -546,12 +551,17 @@ def inlineSingle(inputtext, librarytext):
 				if object[key].getFunction()!=None:
 					switchoutput.append('	case "%s":\n'%key)
 
+					replacements={}
 					function=object[key].getFunction()
 					arguments = ['"'+node.value+'"' if node.type=='STRING' else str(node.value) for node in call[1]]
-					replacements={}
+
+					if call[0].type=='DOT' and call[0][0].type=='INDEX' and call[0][1].value=='call':
+						replacements['this'] = arguments.pop(0)
+					else:
+						replacements['this'] = objectname
+
 					for i in range(0, len(arguments)):
 						replacements[function.params[i]] = arguments[i]
-					replacements['this'] = objectname
 					functionout = replaceIdentifiers(self.librarytext, function.body, replacements, retname, True)
 					needsRetVal = needsRetVal or functionout.needsRetVal
 					switchoutput.append(functionout.getOutput())

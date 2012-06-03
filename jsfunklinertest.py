@@ -452,10 +452,28 @@ class TestSwitch(unittest.TestCase):
 		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);\n\tbreak;\n\tdefault:\n\tcases[select]();\n}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_deeperswitch(self):
+		library="cases = {log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); } }"
+		input='var select="log"; window.cases[select]();'
+		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);\n\tbreak;\n\tdefault:\n\twindow.cases[select]();\n}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 	def test_switchret(self):
 		library="cases = {add : function (one, two) { return one + two; }}"
 		input='var select="add";\nvar x = cases[select](1, 2);'
 		expected="var select=\"add\";\nswitch (select) {\n\tcase \"add\":\nvar retx0 = undefined;\nretx0 = 1 + 2;\n\tbreak;\n\tdefault:\n\tcases[select](1, 2);\n}\nvar x = retx0;"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_deeperswitchthis(self):
+		library="cases = {log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(this.message); } }"
+		input='var select="log"; window.cases[select]();'
+		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(window.cases.message);\n\tbreak;\n\tdefault:\n\twindow.cases[select]();\n}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_deeperswitchcall(self):
+		library="cases = {log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(this.message); } }"
+		input='var select="log"; window.cases[select].call(called);'
+		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(called.message);\n\tbreak;\n\tdefault:\n\twindow.cases[select]();\n}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 

@@ -208,8 +208,8 @@ def _crawlFunctions(env, code):
 			elif node.expression[1].type == 'NEW':			# x = new a
 				fromname = _crawlIdentifier(node.expression[1][0], 'value') + ".prototype"
 				env.set(name, JSObject(None, env.get(fromname)))
-		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING') and node[1].type=='FUNCTION':
-			env.set("this."+node[0].value, JSObject(node[1]))
+		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='FUNCTION':
+			env.set("this."+str(node[0].value), JSObject(node[1]))
 	return env
 
 def _crawlCalls(namespace, code):

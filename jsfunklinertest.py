@@ -548,6 +548,12 @@ class TestPassing(unittest.TestCase):
 		expected="log = function(logger /* : object */ , message) {if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_passDeep(self):
+		library="deep={object:{}};deep.object.prototype={reallog : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) } };"
+		input='log = function(logger/*:deep.object*/, message) {logger.reallog(message);}'
+		expected="log = function(logger/*:deep.object*/, message) {if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 if __name__ == '__main__':
 	if len(sys.argv)>1:

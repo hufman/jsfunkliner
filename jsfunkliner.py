@@ -412,7 +412,7 @@ def inlineSingle(inputtext, librarytext):
 			ret = {}
 			params = string.split(',')
 			for param in params:
-				match = re.match(r'([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\/\*\s*:\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\*\/', param)
+				match = re.match(r'([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\/\*\s*:\s*([a-zA-Z_$][a-zA-Z0-9_$.]*)\s*\*\/', param)
 				if match is None:
 					continue
 				groups = match.groups()

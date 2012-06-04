@@ -507,16 +507,23 @@ def inlineSingle(inputtext, librarytext):
 				self.replacecallswitch(call, retname, usesReturn)
 				return
 
-			funname = _crawlIdentifier(call[0], 'value')
-			function = env.get(funname)
+			if call[0].type=='DOT' and call[0][-1].value=='call':
+				funname = _crawlIdentifier(call[0], 'value')
+				function = env.get(funname[:-5])
+			else:
+				funname = _crawlIdentifier(call[0], 'value')
+				function = env.get(funname)
 			if function == None or function.getFunction() == None:
 				return
-			arguments = ['"'+node.value+'"' if node.type=='STRING' else node.value for node in call[1]]
 			replacements={}
+			arguments = ['"'+node.value+'"' if node.type=='STRING' else node.value for node in call[1]]
+			if call[0].type=='DOT' and call[0][-1].value=='call':
+				replacements['this'] = arguments.pop(0)
+			else:
+				if len(funname.split('.'))>1:
+					replacements['this'] = '.'.join(funname.split('.')[0:-1])
 			for i in range(0, len(arguments)):
 				replacements[function.getFunction().params[i]] = arguments[i]
-			if len(funname.split('.'))>1:
-				replacements['this']='.'.join(funname.split('.')[0:-1])
 			functionout = replaceIdentifiers(self.librarytext, function.getFunction().body, replacements, retname, False)
 			if functionout.needsRetVal:
 				self.preput+=functionout.getOutput()

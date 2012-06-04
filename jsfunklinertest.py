@@ -334,6 +334,20 @@ class TestObject(unittest.TestCase):
 		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\")"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+		
+	def test_objectsinglecallthis(self):
+		library="var object={log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(this.message + message) } }"
+		input='object.log("This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(object.message + \"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+		
+	def test_objectsinglecallthiscall(self):
+		library="var object={log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(this.message + message) } }"
+		input='object.log.call(other,"This is a test")'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(other.message + \"This is a test\")"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 	def test_objectsinglecallelse(self):
 		library="var object={log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); else window.alert(message) } }"

@@ -105,6 +105,10 @@ var loader=function() {
 			'desc':'Advanced objects',
 			'library':'myobject = function(){};\\nmyobject.prototype={reallog: function (message) {\\n if (typeof(console) != "undefined" && typeof(console.log) != "undefined")\\n  console.log(message)\\n }\\n};',
 			'snippet':'log = function(logger /*:myobject*/ , message) {\\n logger.reallog(message);\\n}'
+	},{
+			'desc':'Function switch',
+			'library':'steps = {\\n\\t0:function(){\\n\\t\\tthis.increment(1)},\\n\\t1:function(){\\n\\t\\tthis.increment(2)},\\n\\t2:function(){\\n\\t\\tthis.decrement(3)}\\n}',
+			'snippet':'for (var step = 0; step<steps.length; step++) {\\n\\tsteps[step].call(datablob);\\n}'
 	}];
 
 	var box = document.getElementById('examples');

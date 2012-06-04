@@ -348,6 +348,8 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 				pass
 			elif piece.type in ['TRUE', 'FALSE']:
 				pass
+			elif piece.type=='DOT':					# don't replace identifiers that are after a dot
+				self.walkexpressionpiece(piece[0])
 			elif len(piece):
 				self.walkexpression(piece)
 			else:

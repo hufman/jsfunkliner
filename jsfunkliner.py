@@ -556,6 +556,7 @@ def inlineSingle(inputtext, librarytext):
 			switchoutput.append("switch (%s) {\n"%keyvariable)
 
 			needsRetVal = False
+			arguments = []
 			for key in object.keys():
 				if object[key].getFunction()!=None:
 					switchoutput.append('	case "%s":\n'%key)

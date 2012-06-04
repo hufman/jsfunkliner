@@ -472,6 +472,12 @@ class TestSwitch(unittest.TestCase):
 		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);\n\tbreak;\n\tdefault:\n\twindow.cases[select]();\n}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_nestedswitch(self):
+		library="object = {cases:{log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); } }}"
+		input='var select="log"; object.cases[select]();'
+		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);\n\tbreak;\n\tdefault:\n\tobject.cases[select]();\n}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 	def test_switchret(self):
 		library="cases = {add : function (one, two) { return one + two; }}"
 		input='var select="add";\nvar x = cases[select](1, 2);'

@@ -210,6 +210,14 @@ def _crawlFunctions(env, code):
 				env.set(name, JSObject(None, env.get(fromname)))
 		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='FUNCTION':
 			env.set("this."+str(node[0].value), JSObject(node[1]))
+		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='OBJECT_INIT':
+			#import pdb; pdb.set_trace()
+			name = "this." + node[0].value
+			newthis = env.get(name) or JSObject()
+			env.set(name, newthis)
+			env.pushThis(newthis)
+			_crawlFunctions(env, node[1])
+			env.popThis()
 	return env
 
 def _crawlCalls(namespace, code):

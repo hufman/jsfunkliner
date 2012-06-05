@@ -502,6 +502,24 @@ class TestSwitch(unittest.TestCase):
 		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step]();\n}}'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_arrayforswitch(self):
+		library='steps = [function(){this.increment(1)},function(){this.increment(2)},function(){tthis.decrement(3)}]'
+		input="for (var step = 0; step<steps.length; step++) {steps[step].call(datablob);}"
+		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step]();\n}}'
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_arrayvarforswitch(self):
+		library='var steps = [function(){this.increment(1)},function(){this.increment(2)},function(){tthis.decrement(3)}]'
+		input="for (var step = 0; step<steps.length; step++) {steps[step].call(datablob);}"
+		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step]();\n}}'
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_arraynestedforswitch(self):
+		library='object = {steps:[function(){this.increment(1)},function(){this.increment(2)},function(){tthis.decrement(3)}]}'
+		input="for (var step = 0; step<steps.length; step++) {object.steps[step].call(datablob);}"
+		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tobject.steps[step]();\n}}'
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 class TestDef(unittest.TestCase):
 	def test_def(self):

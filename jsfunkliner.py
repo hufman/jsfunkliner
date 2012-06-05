@@ -175,11 +175,26 @@ def _crawlFunctions(env, code):
 				env.pushThis(newthis)
 				_crawlFunctions(env, node[0].initializer.body)		# crawl the "constructor"
 				env.popThis()
-			elif node[0].initializer.type=='OBJECT_INIT':
+			elif node[0].initializer.type=='OBJECT_INIT':	# var x = {}
 				newthis = env.get(name) or JSObject()
 				env.set(node[0].name, newthis)
 				env.pushThis(newthis)
 				_crawlFunctions(env, node[0].initializer)
+				env.popThis()
+			elif node[0].initializer.type=='ARRAY_INIT':		# var x = []
+				newthis = env.get(name) or JSObject()
+				env.set(name, newthis)
+				env.pushThis(newthis)
+				for index in range(0, len(node[0].initializer)):
+					newthis = JSObject(node[0].initializer[index])	# create the function object
+					name='this.'+str(index)
+					env.set(name, newthis)
+					name=name+".prototype"
+					newthis = JSObject()			# create a blank prototype
+					env.set(name, newthis)
+					env.pushThis(newthis)
+					_crawlFunctions(env, node[0].initializer[index])		# crawl the "constructor"
+					env.popThis()
 				env.popThis()
 			else:
 				if node[0].initializer.type=='IDENTIFIER':
@@ -205,18 +220,48 @@ def _crawlFunctions(env, code):
 				env.pushThis(newthis)
 				_crawlFunctions(env, node.expression[1])
 				env.popThis()
+			elif node.expression[1].type=='ARRAY_INIT':		# x = {}
+				newthis = env.get(name) or JSObject()
+				env.set(name, newthis)
+				env.pushThis(newthis)
+				for index in range(0, len(node.expression[1])):
+					newthis = JSObject(node.expression[1][index])	# create the function object
+					name='this.'+str(index)
+					env.set(name, newthis)
+					name=name+".prototype"
+					newthis = JSObject()			# create a blank prototype
+					env.set(name, newthis)
+					env.pushThis(newthis)
+					_crawlFunctions(env, node.expression[1][index])		# crawl the "constructor"
+					env.popThis()
+				env.popThis()
 			elif node.expression[1].type == 'NEW':			# x = new a
 				fromname = _crawlIdentifier(node.expression[1][0], 'value') + ".prototype"
 				env.set(name, JSObject(None, env.get(fromname)))
-		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='FUNCTION':
+		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='FUNCTION':		# { x : function() }
 			env.set("this."+str(node[0].value), JSObject(node[1]))
-		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='OBJECT_INIT':
-			#import pdb; pdb.set_trace()
+		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='OBJECT_INIT':		# { x : {} }
 			name = "this." + node[0].value
 			newthis = env.get(name) or JSObject()
 			env.set(name, newthis)
 			env.pushThis(newthis)
 			_crawlFunctions(env, node[1])
+			env.popThis()
+		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='ARRAY_INIT':		# { x : [] }
+			name = "this." + node[0].value
+			newthis = env.get(name) or JSObject()
+			env.set(name, newthis)
+			env.pushThis(newthis)
+			for index in range(0, len(node[1])):
+				newthis = JSObject(node[1][index])	# create the function object
+				name='this.'+str(index)
+				env.set(name, newthis)
+				name=name+".prototype"
+				newthis = JSObject()			# create a blank prototype
+				env.set(name, newthis)
+				env.pushThis(newthis)
+				_crawlFunctions(env, node[1][index])		# crawl the "constructor"
+				env.popThis()
 			env.popThis()
 	return env
 

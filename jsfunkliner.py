@@ -346,6 +346,7 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 
 		def walkstatement(self, statement):
 			#print("Looking at statement "+str(statement))
+			quitnow=False
 			if statement.type == "RETURN":
 				self.output.append(self.librarytext[self.inputoffset:statement.start])
 				if not isinstance(statement.value, jsparser.Node):
@@ -363,22 +364,25 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 			elif statement.type == 'CALL':
 				self.replaceIdentifier(statement[0])	# possibly replace the function name
 				self.walkexpression(statement[1])	# replace any replacements to the function
+				quitnow=True
 			elif statement.type == 'IF':
 				self.walkexpression(statement.condition)
 			elif statement.type == 'SEMICOLON':
 				self.walkexpression(statement.expression)
+				quitnow=True
 			elif statement.type == 'VAR':
 				if hasattr(statement[0], 'initializer'):
 					self.walkexpression(statement[0].initializer)
-			for attr in Replacer.CHILD_ATTRS:
-				child = getattr(statement, attr, None)
-				if child and isinstance(child, jsparser.Node):
-					if hasattr(child, 'expression'):
-						self.walkstatement(child.expression)
-					elif len(child):
-						self.walkbranch(child, False)
-					else:
-						print("unknown type of child: "+str(child))
+			if not quitnow:
+				for attr in Replacer.CHILD_ATTRS:
+					child = getattr(statement, attr, None)
+					if child and isinstance(child, jsparser.Node):
+						if hasattr(child, 'expression'):
+							self.walkexpression(child.expression)
+						elif len(child):
+							self.walkbranch(child, False)
+						else:
+							print("unknown type of child: "+str(child))
 			if self.inputoffset < statement.end:
 				#print("Setting offset to "+str(statement.end))
 				self.output.append(self.librarytext[self.inputoffset:statement.end])

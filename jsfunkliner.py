@@ -368,7 +368,8 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 			elif statement.type == 'SEMICOLON':
 				self.walkexpression(statement.expression)
 			elif statement.type == 'VAR':
-				self.walkexpression(statement[0].initializer)
+				if hasattr(statement[0], 'initializer'):
+					self.walkexpression(statement[0].initializer)
 			for attr in Replacer.CHILD_ATTRS:
 				child = getattr(statement, attr, None)
 				if child and isinstance(child, jsparser.Node):

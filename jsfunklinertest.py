@@ -520,6 +520,12 @@ class TestSwitch(unittest.TestCase):
 		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tobject.steps[step]();\n}}'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_switchargs(self):
+		library="cases = {log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); } }"
+		input='var select="log"; cases[select](thing);'
+		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(thing);\n\tbreak;\n\tdefault:\n\tcases[select](thing);\n}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 class TestDef(unittest.TestCase):
 	def test_def(self):

@@ -616,6 +616,11 @@ def inlineSingle(inputtext, librarytext):
 			for key in object.keys():
 				if object[key].getFunction()!=None:
 					switchoutput.append('	case "%s":\n'%key)
+					try:
+						if str(int(key)) == key:
+							switchoutput.append('	case %s:\n'%key)
+					except:
+						pass
 
 					replacements={}
 					function=object[key].getFunction()

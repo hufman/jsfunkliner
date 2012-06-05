@@ -499,25 +499,25 @@ class TestSwitch(unittest.TestCase):
 	def test_forswitch(self):
 		library='steps = {0:function(){this.increment(1)},1:function(){this.increment(2)},2:function(){tthis.decrement(3)}}'
 		input="for (var step = 0; step<steps.length; step++) {steps[step].call(datablob);}"
-		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step].call(datablob);\n}}'
+		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\n\tcase 1:\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\n\tcase 0:\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\n\tcase 2:\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step].call(datablob);\n}}'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 	def test_arrayforswitch(self):
 		library='steps = [function(){this.increment(1)},function(){this.increment(2)},function(){tthis.decrement(3)}]'
 		input="for (var step = 0; step<steps.length; step++) {steps[step].call(datablob);}"
-		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step].call(datablob);\n}}'
+		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\n\tcase 1:\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\n\tcase 0:\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\n\tcase 2:\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step].call(datablob);\n}}'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 	def test_arrayvarforswitch(self):
 		library='var steps = [function(){this.increment(1)},function(){this.increment(2)},function(){tthis.decrement(3)}]'
 		input="for (var step = 0; step<steps.length; step++) {steps[step].call(datablob);}"
-		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step].call(datablob);\n}}'
+		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\n\tcase 1:\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\n\tcase 0:\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\n\tcase 2:\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step].call(datablob);\n}}'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 	def test_arraynestedforswitch(self):
 		library='object = {steps:[function(){this.increment(1)},function(){this.increment(2)},function(){tthis.decrement(3)}]}'
 		input="for (var step = 0; step<steps.length; step++) {object.steps[step].call(datablob);}"
-		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tobject.steps[step].call(datablob);\n}}'
+		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\n\tcase 1:\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\n\tcase 0:\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\n\tcase 2:\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tobject.steps[step].call(datablob);\n}}'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 	def test_switchargs(self):

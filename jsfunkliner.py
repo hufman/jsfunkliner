@@ -393,6 +393,7 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 			elif statement.type == 'VAR':
 				if hasattr(statement[0], 'initializer'):
 					self.walkexpression(statement[0].initializer)
+					statement.end=statement[0].initializer.end
 			if not quitnow:
 				for attr in Replacer.CHILD_ATTRS:
 					child = getattr(statement, attr, None)
@@ -531,6 +532,9 @@ def inlineSingle(inputtext, librarytext):
 					if not worked:
 						self.walkbranch(statement.body)
 					continue
+				elif statement.type == 'SWITCH':
+					for case in statement.cases:
+						self.walkbranch(case.statements)
 				#else:
 					#print("Unknown type of statement: "+str(statement))
 				for attr in Crawler.CHILD_ATTRS:

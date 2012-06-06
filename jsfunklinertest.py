@@ -564,6 +564,36 @@ class TestDef(unittest.TestCase):
 		expected="object.prototype.log = function(message) {if (typeof(console) != 'undefined' && 'log' in console) console.log(message);}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_doublenew(self):
+		library="function adder(){this.run = function(one, two) { return one + two }} function mather(){this.add = new adder(); } mathing = new mather()"
+		input='var x = mathing.add.run(1,2);'
+		expected="var x = (1 + 2);"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_nesteddoublenew(self):
+		library="var object={}; object.adder = function(){}; object.adder.prototype={run : function(one, two) { return one + two }}; function mather(){this.add = new object.adder(); }; mathing = new mather()"
+		input='var x = mathing.add.run(1,2);'
+		expected="var x = (1 + 2);"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_2nesteddoublenew(self):
+		library="var object={}; object.nested={}; object.nested.adder = function(){}; object.nested.adder.prototype={run : function(one, two) { return one + two }}; function mather(){this.add = new object.nested.adder(); }; mathing = new mather()"
+		input='var x = mathing.add.run(1,2);'
+		expected="var x = (1 + 2);"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_3nesteddoublenew(self):
+		library="var object={}; object.nested=function(){this.adder = new object.nested.adder()}; object.nested.adder = function(){}; object.nested.adder.prototype={run : function(one, two) { return one + two }}; function mather(){this.add = new object.nested.adder(); }; mathing = new mather()"
+		input='var x = mathing.add.run(1,2);'
+		expected="var x = (1 + 2);"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_deferrednew(self):
+		library="var object={}; object.nested=function(){this.adder = new object.nested.adder()}; object.nested.adder = function(){}; object.nested.adder.prototype={run : function(one, two) { return one + two }}; mathing = new object.nested()"
+		input='var x = mathing.adder.run(1,2);'
+		expected="var x = (1 + 2);"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 class TestPassing(unittest.TestCase):
 	def test_pass(self):

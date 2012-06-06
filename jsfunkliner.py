@@ -153,6 +153,7 @@ def _crawlIdentifier(object, valuename):
 		return _crawlIdentifier(object[0], valuename) + "." + _crawlIdentifier(object[1], valuename)
 
 def _crawlFunctions(env, code):
+	deferredcrawling=[]
 	#import pdb; pdb.set_trace()
 	for node in code:
 		if node.type=='FUNCTION':
@@ -161,9 +162,13 @@ def _crawlFunctions(env, code):
 			name=node.name+".prototype"
 			newthis = env.get(name) or JSObject()			# create a blank prototype
 			env.set(name, newthis)
-			env.pushThis(newthis)
-			_crawlFunctions(env, node.body)		# crawl the "constructor"
-			env.popThis()
+			def makedeferred(newthis, nodebody):
+				def deferred():
+					env.pushThis(newthis)
+					_crawlFunctions(env, nodebody)		# crawl the "constructor"
+					env.popThis()
+				return deferred
+			deferredcrawling.append(makedeferred(newthis, node.body))
 		elif node.type=='VAR':
 			name = node[0].value
 			if node[0].initializer.type=='FUNCTION':
@@ -172,9 +177,13 @@ def _crawlFunctions(env, code):
 				name=name+".prototype"
 				newthis = env.get(name) or JSObject()			# create a blank prototype
 				env.set(name, newthis)
-				env.pushThis(newthis)
-				_crawlFunctions(env, node[0].initializer.body)		# crawl the "constructor"
-				env.popThis()
+				def makedeferred(newthis, nodebody):
+					def deferred():
+						env.pushThis(newthis)
+						_crawlFunctions(env, nodebody)		# crawl the "constructor"
+						env.popThis()
+					return deferred
+				deferredcrawling.append(makedeferred(newthis, node[0].initializer.body))
 			elif node[0].initializer.type=='OBJECT_INIT':	# var x = {}
 				newthis = env.get(name) or JSObject()
 				env.set(node[0].name, newthis)
@@ -208,9 +217,13 @@ def _crawlFunctions(env, code):
 				name=name+".prototype"
 				newthis = env.get(name) or JSObject()			# create a blank prototype
 				env.set(name, newthis)
-				env.pushThis(newthis)
-				_crawlFunctions(env, node.expression[1].body)		# crawl the "constructor"
-				env.popThis()
+				def makedeferred(newthis, nodebody):
+					def deferred():
+						env.pushThis(newthis)
+						_crawlFunctions(env, nodebody)		# crawl the "constructor"
+						env.popThis()
+					return deferred
+				deferredcrawling.append(makedeferred(newthis, node.expression[1].body))
 			elif node.expression[1].type == 'IDENTIFIER':		# x = x;
 				fromname = _crawlIdentifier(node.expression[1], 'value')
 				env.set(name, env.get(fromname))
@@ -237,7 +250,12 @@ def _crawlFunctions(env, code):
 				env.popThis()
 			elif node.expression[1].type == 'NEW':			# x = new a
 				fromname = _crawlIdentifier(node.expression[1][0], 'value') + ".prototype"
-				env.set(name, JSObject(None, env.get(fromname)))
+				def makedeferredinit(name, fromname):
+					def deferred():
+						env.set(name, JSObject(None, env.get(fromname)))
+					return deferred
+				deferredcrawling.append(makedeferredinit(name, fromname))
+				
 		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='FUNCTION':		# { x : function() }
 			env.set("this."+str(node[0].value), JSObject(node[1]))
 		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='OBJECT_INIT':		# { x : {} }
@@ -263,6 +281,8 @@ def _crawlFunctions(env, code):
 				_crawlFunctions(env, node[1][index])		# crawl the "constructor"
 				env.popThis()
 			env.popThis()
+	for deferred in deferredcrawling:
+		deferred()
 	return env
 
 def _crawlCalls(namespace, code):

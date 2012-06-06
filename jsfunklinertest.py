@@ -594,6 +594,12 @@ class TestDef(unittest.TestCase):
 		expected="var x = (1 + 2);"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_deferrednewargs(self):
+		library="var object={}; object.nested=function(){this.adder = new object.nested.adder(empty)}; object.nested.adder = function(empty){}; object.nested.adder.prototype={run : function(one, two) { return one + two }}; mathing = new object.nested()"
+		input='var x = mathing.adder.run(1,2);'
+		expected="var x = (1 + 2);"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 class TestPassing(unittest.TestCase):
 	def test_pass(self):

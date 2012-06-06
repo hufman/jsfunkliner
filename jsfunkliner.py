@@ -248,7 +248,7 @@ def _crawlFunctions(env, code):
 					_crawlFunctions(env, node.expression[1][index])		# crawl the "constructor"
 					env.popThis()
 				env.popThis()
-			elif node.expression[1].type == 'NEW':			# x = new a
+			elif node.expression[1].type in ['NEW', 'NEW_WITH_ARGS']:			# x = new a
 				fromname = _crawlIdentifier(node.expression[1][0], 'value') + ".prototype"
 				def makedeferredinit(name, fromname):
 					def deferred():

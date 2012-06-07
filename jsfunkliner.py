@@ -813,7 +813,7 @@ def inlineSingle(inputtext, librarytext):
 			self.output.append(self.inputtext[self.inputoffset:loop.start])
 			self.inputoffset = loop.body.end
 			while not stop(cur):
-				bodyout = replaceIdentifiers(self.inputtext, loop.body, {"i":cur}, None, False)
+				bodyout = replaceIdentifiers(self.inputtext, loop.body, {variable:cur}, None, False)
 				self.output.append(bodyout.getOutput())
 				cur += step
 				if len(loop.body):

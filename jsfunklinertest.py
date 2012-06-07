@@ -248,6 +248,11 @@ class TestUnrolling(unittest.TestCase):
 		expected="log(0);\nlog(1);"
 		output=jsfunkliner.inlineSingle(input, '')
 		self.assertEqual(expected, output)
+	def test_funloopfunnyindex(self):
+		input="for (var f=0; f<2; f+=1) {a=(time['8'+f] * 2)>>3;}"
+		expected="a=(time['8'+0] * 2)>>3;\na=(time['8'+1] * 2)>>3;"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
 	def test_funnyloopblock(self):
 		input="for (var i=0; i<2; i+=1) {log( i) ;}"
 		expected="log( 0) ;\nlog( 1) ;"

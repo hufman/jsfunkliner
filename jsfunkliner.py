@@ -149,8 +149,14 @@ def _crawlIdentifier(object, valuename):
 		return 'this'
 	if object.type=='IDENTIFIER':
 		return getattr(object, valuename)
+	if object.type=='NUMBER':
+		return str(getattr(object, valuename))
 	if object.type=='DOT':
 		return _crawlIdentifier(object[0], valuename) + "." + _crawlIdentifier(object[1], valuename)
+	if object.type=='INDEX':
+		return _crawlIdentifier(object[0], valuename) + "[" + _crawlIdentifier(object[1], valuename) + "]"
+	#import pdb; pdb.set_trace()
+	print("Unknown identifier type: " + object.type)
 
 def _crawlFunctions(env, code):
 	deferredcrawling=[]
@@ -598,7 +604,7 @@ def inlineSingle(inputtext, librarytext):
 			if function == None or function.getFunction() == None:
 				return
 			replacements={}
-			arguments = ['"'+node.value+'"' if node.type=='STRING' else node.value for node in call[1]]
+			arguments = ['"'+node.value+'"' if node.type=='STRING' else _crawlIdentifier(node, 'value') for node in call[1]]
 			if call[0].type=='DOT' and call[0][-1].value=='call':
 				replacements['this'] = arguments.pop(0)
 			else:

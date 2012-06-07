@@ -17,10 +17,30 @@ class TestBasic(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, '')
 		self.assertEqual(expected, output)
 
+	def test_callsubarg(self):
+		input="window.alert(this.sub[2])"
+		expected="window.alert(this.sub[2])"
+		output=jsfunkliner.inlineSingle(input, '')
+		self.assertEqual(expected, output)
+
 	def test_nullreturn(self):
 		library="function log(message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); return}"
 		input='log("This is a test")'
 		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(\"This is a test\"); "
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_singlecalldot(self):
+		library="function log(message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }"
+		input='log(this.message)'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(this.message)"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+	def test_singlecallsub(self):
+		library="function log(message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }"
+		input='log(this.message[0])'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(this.message[0])"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 

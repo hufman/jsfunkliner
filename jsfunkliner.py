@@ -163,7 +163,10 @@ def _crawlIdentifier(object, valuename):
 	if object.type=='DECREMENT':
 		var = _crawlIdentifier(object[0], valuename)
 		return '--' + var if object.start < object[0].start else var + '--'
-	du={'MOD':'%', 'PLUS':'+', 'MINUS':'-', 'MUL':'*', 'DIV':'/'}
+	du={'MOD':'%', 'PLUS':'+', 'MINUS':'-', 'MUL':'*', 'DIV':'/', \
+	    'URSH':'>>>', 'RSH':'>>', 'LSH':'<<', 'BITWISE_AND': '&', 'BITWISE_OR':'|', 'BITWISE_XOR':'^', \
+	    'AND':'&&', 'OR':'||', \
+	    'STRICT_EQ':'===', 'EQ':'==', 'STRICT_NE':'!==', 'NE':'!=', 'LE':'<=', 'LT':'<', 'GE':'>=', 'GT':'>'}
 	if object.type in du.keys():
 		return _crawlIdentifier(object[0], valuename) + du[object.type] + _crawlIdentifier(object[1], valuename)
 	#import pdb; pdb.set_trace()

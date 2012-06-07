@@ -58,6 +58,13 @@ class TestBasic(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 
+	def test_singlecallmod(self):
+		library="function log(message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }"
+		input='log(this.message%2)'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(this.message%2)"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
 	def test_singlecall(self):
 		library="function log(message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }"
 		input='log("This is a test")'

@@ -161,6 +161,8 @@ def _crawlIdentifier(object, valuename):
 	if object.type=='DECREMENT':
 		var = _crawlIdentifier(object[0], valuename)
 		return '--' + var if object.start < object[0].start else var + '--'
+	if object.type=='MOD':
+		return _crawlIdentifier(object[0], valuename) + "%" + _crawlIdentifier(object[1], valuename)
 	#import pdb; pdb.set_trace()
 	print("Unknown identifier type: " + object.type)
 

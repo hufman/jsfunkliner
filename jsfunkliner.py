@@ -364,7 +364,6 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 				self.output.append('var %s = undefined;\n'%retval)
 			else:
 				self.needsRetVal=False
-			oldoffset=self.inputoffset
 			#print("Looking at code "+str(body))
 			if len(body):
 				self.walkbranch(body, True)
@@ -458,13 +457,11 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 				self.walkexpressionpiece(piece[0])
 			elif len(piece):
 				self.walkexpression(piece)
+			elif hasattr(piece, 'expression'):
+				self.walkexpressionpiece(piece.expression)
 			else:
-				try:
-					self.walkexpressionpiece(piece.expression)
-				except:
-					excinfo=sys.exc_info()
-					sys.excepthook(excinfo[0], excinfo[1], excinfo[2])
-					print("unknown type of piece: "+str(piece))
+				#import pdb; pdb.set_trace()
+				print("unknown type of piece: "+str(piece))
 
 		def replaceIdentifier(self, identifier):
 			if identifier.value in replacements.keys():

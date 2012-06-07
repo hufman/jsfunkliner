@@ -534,7 +534,7 @@ class TestSwitch(unittest.TestCase):
 		self.assertEqual(expected, output)
 	def test_nestedswitch(self):
 		library='var foo=function(thing){var x = thing}'
-		input='switch(thing){case "foo": foo(); break; case 1: foo(1); break; case 2: foo(2); break;}'
+		input='switch(thing){case "foo": foo(thing); break; case 1: foo(1); break; case 2: foo(2); break;}'
 		expected='switch(thing){case "foo": var x = thing; break; case 1: var x = 1; break; case 2: var x = 2; break;}'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
@@ -624,6 +624,20 @@ class TestPassing(unittest.TestCase):
 		library="deep={object:{}};deep.object.prototype={reallog : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) } };"
 		input='log = function(logger/*:deep.object*/, message) {logger.reallog(message);}'
 		expected="log = function(logger/*:deep.object*/, message) {if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
+class TestPassing(unittest.TestCase):
+	def test_shortcall(self):
+		library="function twoargs(one, two) { var x = one + two; }"
+		input='twoargs(ones)'
+		expected='var x = ones + undefined'
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_longcall(self):
+		library="function twoargs(one, two) { var x = one + two; }"
+		input='twoargs(ones, twos, threes)'
+		expected='var x = ones + twos'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 

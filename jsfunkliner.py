@@ -604,8 +604,12 @@ def inlineSingle(inputtext, librarytext):
 			else:
 				if len(funname.split('.'))>1:
 					replacements['this'] = '.'.join(funname.split('.')[0:-1])
-			for i in range(0, len(arguments)):
-				replacements[function.getFunction().params[i]] = arguments[i]
+			funparams = function.getFunction().params
+			for i in range(0, len(funparams)):
+				if i < len(arguments):
+					replacements[funparams[i]] = arguments[i]
+				else:
+					replacements[funparams[i]] = 'undefined'
 			functionout = replaceIdentifiers(self.librarytext, function.getFunction().body, replacements, retname, False)
 			if functionout.needsRetVal:
 				self.preput+=functionout.getOutput()

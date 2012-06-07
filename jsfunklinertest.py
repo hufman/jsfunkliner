@@ -721,6 +721,12 @@ class TestPassing(unittest.TestCase):
 		expected='var x = ones + twos'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_funnynames(self):
+		library="function onearg(one) { var x = {one: one} }"
+		input="onearg(this.munch)"
+		expected="var x = {one: this.munch}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 if __name__ == '__main__':
 	if len(sys.argv)>1:

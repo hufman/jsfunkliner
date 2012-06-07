@@ -1049,6 +1049,7 @@ def Expression(t, x, stop=None):
                 operands.append(n)
                 t.scanOperand = False
                 x.curlyLevel -= 1
+                n.end = t.token.end
 
             elif tt == RIGHT_CURLY:
                 if not t.scanOperand and x.curlyLevel != cl:

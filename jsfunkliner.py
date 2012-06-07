@@ -455,6 +455,8 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 				pass
 			elif piece.type=='DOT':					# don't replace identifiers that are after a dot
 				self.walkexpressionpiece(piece[0])
+			elif piece.type=='PROPERTY_INIT':			# don't replace identifiers that are the keys of {}
+				self.walkexpressionpiece(piece[1])
 			elif len(piece):
 				self.walkexpression(piece)
 			elif hasattr(piece, 'expression'):

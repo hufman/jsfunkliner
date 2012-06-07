@@ -44,6 +44,13 @@ class TestBasic(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 
+	def test_singlecallgroup(self):
+		library="function log(message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) }"
+		input='log((i+3)*(i-3)/i)'
+		expected="if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log((i+3)*(i-3)/i)"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
 	def test_singlecallincrement(self):
 		library="function log(message, message2) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message, message2) }"
 		input='log(this.message++, ++this.message)'

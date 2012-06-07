@@ -1,1 +1,12 @@
 Given a Javascript snippet and a library of code, recursively inline every function until the original snippet contains the same functionality but without calling any functions available in the library
+
+Features:
+	Function expanding, with argument replacing
+	Forloop unrolling
+	Subscript function calls get converted to switch statements [ object[selector]() ]
+
+Limitations:
+	Does not handle closures
+	Can not handle multiple returns
+	Recursive functions will continually expand
+	Incorrect results when passing an incrementing variable through a call [ blahfunction(a++) ]

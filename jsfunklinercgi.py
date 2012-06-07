@@ -144,9 +144,27 @@ else {document.addEventListener('load', loader, false);}
 </script>
 </head>
 <body>
+<p>Use this page to inline Javascript</p>
+<p>Any code in the Snippet box that calls functions in the Library box will have the function's body inlined</p>
+<p>
+Features:
+<ul>
+<li>Function expanding, with argument replacing</li>
+<li>For loop unrolling</il>
+<li>Subscript function calls get converted to switch statements [ object[selector]() ]</li>
+</ul>
+</p>
+<p>
+Limitations:
+<ul>
+<li>Does not handle closures</li>
+<li>Can not handle multiple returns</li>
+<li>Recursive functions will continually expand</li>
+<li>Incorrect results when passing an incrementing variable through a call [ blahfunction(a++) ]</li>
+</ul>
+</p>
+
 """)
-	print('<p>Use this page to inline Javascript</p>')
-	print('<p>Any code in the Snippet box that calls functions in the Library box will have the function\'s body inlined</p>')
 	print('<p>Examples: <select id="examples"></select></p>')
 	print('<form action="" method="POST">')
 	printContainer('library')

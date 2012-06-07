@@ -170,6 +170,13 @@ class TestBasic(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 
+	def test_dotcallretval(self):
+		library="function square(one) { var two = one; return one * two; }"
+		input="this.final[i] = square(2)"
+		expected="var retthis_final_i_0 = undefined;\nvar two = 2; retthis_final_i_0 = 2 * two;\nthis.final[i] = retthis_final_i_0"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
 class TestUnrolling(unittest.TestCase):
 	def test_funloop(self):
 		input="for (var i=0; i<2; i+=1) log(i);"

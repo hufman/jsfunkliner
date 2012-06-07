@@ -514,11 +514,15 @@ class TestSwitch(unittest.TestCase):
 		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);\n\tbreak;\n\tdefault:\n\tcases[select]();\n}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
 	def test_deeperswitch(self):
 		library="cases = {log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); } }"
 		input='var select="log"; window.cases[select]();'
 		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);\n\tbreak;\n\tdefault:\n\twindow.cases[select]();\n}"
 		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
 		self.assertEqual(expected, output)
 	def test_nestedswitchcall(self):
 		library="object = {cases:{log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); } }}"
@@ -526,11 +530,15 @@ class TestSwitch(unittest.TestCase):
 		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message);\n\tbreak;\n\tdefault:\n\tobject.cases[select]();\n}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
 	def test_switchret(self):
 		library="cases = {add : function (one, two) { return one + two; }}"
 		input='var select="add";\nvar x = cases[select](1, 2);'
 		expected="var select=\"add\";\nswitch (select) {\n\tcase \"add\":\nvar retx0 = undefined;\nretx0 = 1 + 2;\n\tbreak;\n\tdefault:\n\tcases[select](1, 2);\n}\nvar x = retx0;"
 		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
 		self.assertEqual(expected, output)
 	def test_deeperswitchthis(self):
 		library="cases = {log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(this.message); } }"
@@ -538,11 +546,15 @@ class TestSwitch(unittest.TestCase):
 		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(window.cases.message);\n\tbreak;\n\tdefault:\n\twindow.cases[select]();\n}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
 	def test_deeperswitchcall(self):
 		library="cases = {log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(this.message); } }"
 		input='var select="log"; window.cases[select].call(called);'
 		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(called.message);\n\tbreak;\n\tdefault:\n\twindow.cases[select].call(called);\n}"
 		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
 		self.assertEqual(expected, output)
 	def test_forswitch(self):
 		library='steps = {0:function(){this.increment(1)},1:function(){this.increment(2)},2:function(){tthis.decrement(3)}}'
@@ -550,11 +562,15 @@ class TestSwitch(unittest.TestCase):
 		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\n\tcase 1:\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\n\tcase 0:\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\n\tcase 2:\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step].call(datablob);\n}}'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
 	def test_arrayforswitch(self):
 		library='steps = [function(){this.increment(1)},function(){this.increment(2)},function(){tthis.decrement(3)}]'
 		input="for (var step = 0; step<steps.length; step++) {steps[step].call(datablob);}"
 		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\n\tcase 1:\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\n\tcase 0:\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\n\tcase 2:\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step].call(datablob);\n}}'
 		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
 		self.assertEqual(expected, output)
 	def test_arrayvarforswitch(self):
 		library='var steps = [function(){this.increment(1)},function(){this.increment(2)},function(){tthis.decrement(3)}]'
@@ -562,11 +578,15 @@ class TestSwitch(unittest.TestCase):
 		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\n\tcase 1:\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\n\tcase 0:\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\n\tcase 2:\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tsteps[step].call(datablob);\n}}'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
 	def test_arraynestedforswitch(self):
 		library='object = {steps:[function(){this.increment(1)},function(){this.increment(2)},function(){tthis.decrement(3)}]}'
 		input="for (var step = 0; step<steps.length; step++) {object.steps[step].call(datablob);}"
 		expected='for (var step = 0; step<steps.length; step++) {switch (step) {\n\tcase "1":\n\tcase 1:\ndatablob.increment(2);\n\tbreak;\n\tcase "0":\n\tcase 0:\ndatablob.increment(1);\n\tbreak;\n\tcase "2":\n\tcase 2:\ntthis.decrement(3);\n\tbreak;\n\tdefault:\n\tobject.steps[step].call(datablob);\n}}'
 		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
 		self.assertEqual(expected, output)
 	def test_switchargs(self):
 		library="cases = {log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message); } }"
@@ -574,17 +594,23 @@ class TestSwitch(unittest.TestCase):
 		expected="var select=\"log\"; switch (select) {\n\tcase \"log\":\nif (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(thing);\n\tbreak;\n\tdefault:\n\tcases[select](thing);\n}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
 	def test_switchinstance(self):
 		library='cases = {"0" : function (instance) { this.get(instance); this.temp = this.get(instance); } }'
 		input='cases[select](thing);'
 		expected="switch (select) {\n\tcase \"0\":\n\tcase 0:\ncases.get(thing); cases.temp = cases.get(thing);\n\tbreak;\n\tdefault:\n\tcases[select](thing);\n}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
 	def test_nestedswitch(self):
 		library='var foo=function(thing){var x = thing}'
 		input='switch(thing){case "foo": foo(thing); break; case 1: foo(1); break; case 2: foo(2); break;}'
 		expected='switch(thing){case "foo": var x = thing; break; case 1: var x = 1; break; case 2: var x = 2; break;}'
 		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
 		self.assertEqual(expected, output)
 
 class TestDef(unittest.TestCase):

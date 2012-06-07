@@ -497,6 +497,7 @@ def inlineSingle(inputtext, librarytext):
 			script = jsparser.parse(inputtext)
 			self.librarytext = librarytext
 			self.library = library
+			self.crawlingSwitchDefault = False
 
 			self.preput = ''
 
@@ -561,7 +562,10 @@ def inlineSingle(inputtext, librarytext):
 					continue
 				elif statement.type == 'SWITCH':
 					for case in statement.cases:
+						if statement.defaultIndex>=0 and case == statement.cases[statement.defaultIndex]:
+							self.crawlingSwitchDefault = True
 						self.walkbranch(case.statements)
+						self.crawlingSwitchDefault = False
 				#else:
 					#print("Unknown type of statement: "+str(statement))
 				for attr in Crawler.CHILD_ATTRS:
@@ -665,6 +669,9 @@ def inlineSingle(inputtext, librarytext):
 
 			object = env.get(objectname)
 			if object == None:
+				return
+
+			if self.crawlingSwitchDefault:
 				return
 
 			switchoutput=[]

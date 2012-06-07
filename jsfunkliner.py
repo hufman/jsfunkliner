@@ -401,6 +401,7 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 					self.output.append(";\n")
 				else:
 					self.walkexpression(statement.value)
+				quitnow = True
 			elif statement.type == 'CALL':
 				self.replaceIdentifier(statement[0])	# possibly replace the function name
 				self.walkexpression(statement[1])	# replace any replacements to the function
@@ -423,7 +424,7 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 						elif len(child):
 							self.walkbranch(child, False)
 						else:
-							print("unknown type of child: "+str(child))
+							self.walkexpressionpiece(child)
 			if self.inputoffset < statement.end:
 				#print("Setting offset to "+str(statement.end))
 				self.output.append(self.librarytext[self.inputoffset:statement.end])
@@ -443,6 +444,12 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 				self.walkexpression(piece)
 			elif piece.type=='STRING':
 				pass
+			elif piece.type=='RETURN':
+				if isinstance(piece.value, jsparser.Node):
+					self.walkexpressionpiece(piece.value)
+			elif piece.type=='LIST':
+				if len(piece):
+					self.walkexpression(piece)
 			elif piece.type=='NUMBER':
 				pass
 			elif piece.type in ['TRUE', 'FALSE']:

@@ -518,61 +518,68 @@ def inlineSingle(inputtext, librarytext):
 			return ret
 
 		def walkbranch(self, branch):
+			#import pdb; pdb.set_trace()
 			if not getattr(branch, 'end', None):
 				branch.end = len(inputtext)
-			for statement in branch:
-				#print("Looking at statement "+str(statement))
-				self.statementCalls = []
-				if statement.type == "VAR":	# create a new variable
-					child = getattr(statement[0], 'initializer', None)
-					if child:
-						name = _crawlIdentifier(statement[0], 'value')
-						self.callcount = 0
-						self.preput = ''
-						self.output.append(self.inputtext[self.inputoffset:statement.start])
-						self.inputoffset = statement.start
-						index = len(self.output)
-						self.walkexpression(child, name, True)
-						if len(self.preput)>0:
-							self.output.insert(index, self.preput)
-				elif statement.type == 'SEMICOLON':
-					child = getattr(statement, 'expression', None)
-					if child:
-						if statement.expression.type=='ASSIGN':
-							name = _crawlIdentifier(statement.expression[0], 'value')
-						else:
-							name = statement.value
-						self.callcount = 0
-						self.preput = ''
-						self.output.append(self.inputtext[self.inputoffset:statement.start])
-						self.inputoffset=statement.start
-						index = len(self.output)
-						self.walkexpression(child, name, True if statement.expression.type=='ASSIGN' else False)
-						if len(self.preput)>0:
-							self.output.insert(index, self.preput)
-					continue
-				elif statement.type == 'CALL':
-					self.replacefunction(statement, statement[0].value)
-					continue
-				elif statement.type == 'FOR':
-					worked = self.unloopFor(statement)
-					if not worked:
-						self.walkbranch(statement.body)
-					continue
-				elif statement.type == 'SWITCH':
-					for case in statement.cases:
-						if statement.defaultIndex>=0 and case == statement.cases[statement.defaultIndex]:
-							self.crawlingSwitchDefault = True
-						self.walkbranch(case.statements)
-						self.crawlingSwitchDefault = False
-				#else:
-					#print("Unknown type of statement: "+str(statement))
-				for attr in Crawler.CHILD_ATTRS:
-					child = getattr(statement, attr, None)
-					if child and isinstance(child, jsparser.Node):
-						self.walkbranch(child)
+			if len(branch):
+				for statement in branch:
+					self.walkstatement(statement)
+			else:
+				self.walkstatement(branch)
 			self.output.append(self.inputtext[self.inputoffset:branch.end])
 			self.inputoffset=branch.end
+
+		def walkstatement(self, statement):
+			#print("Looking at statement "+str(statement))
+			self.statementCalls = []
+			if statement.type == "VAR":	# create a new variable
+				child = getattr(statement[0], 'initializer', None)
+				if child:
+					name = _crawlIdentifier(statement[0], 'value')
+					self.callcount = 0
+					self.preput = ''
+					self.output.append(self.inputtext[self.inputoffset:statement.start])
+					self.inputoffset = statement.start
+					index = len(self.output)
+					self.walkexpression(child, name, True)
+					if len(self.preput)>0:
+						self.output.insert(index, self.preput)
+			elif statement.type == 'SEMICOLON':
+				child = getattr(statement, 'expression', None)
+				if child:
+					if statement.expression.type=='ASSIGN':
+						name = _crawlIdentifier(statement.expression[0], 'value')
+					else:
+						name = statement.value
+					self.callcount = 0
+					self.preput = ''
+					self.output.append(self.inputtext[self.inputoffset:statement.start])
+					self.inputoffset=statement.start
+					index = len(self.output)
+					self.walkexpression(child, name, True if statement.expression.type=='ASSIGN' else False)
+					if len(self.preput)>0:
+						self.output.insert(index, self.preput)
+				return
+			elif statement.type == 'CALL':
+				self.replacefunction(statement, statement[0].value)
+				return
+			elif statement.type == 'FOR':
+				worked = self.unloopFor(statement)
+				if not worked:
+					self.walkbranch(statement.body)
+				return
+			elif statement.type == 'SWITCH':
+				for case in statement.cases:
+					if statement.defaultIndex>=0 and case == statement.cases[statement.defaultIndex]:
+						self.crawlingSwitchDefault = True
+					self.walkbranch(case.statements)
+					self.crawlingSwitchDefault = False
+			#else:
+				#print("Unknown type of statement: "+str(statement))
+			for attr in Crawler.CHILD_ATTRS:
+				child = getattr(statement, attr, None)
+				if child and isinstance(child, jsparser.Node):
+					self.walkbranch(child)
 
 		def walkexpression(self, expression, name, usesReturn):
 			#import pdb; pdb.set_trace()

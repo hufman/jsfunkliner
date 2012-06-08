@@ -274,6 +274,12 @@ class TestUnrolling(unittest.TestCase):
 		expected="var x = 0; for (var i=0; i<4; i=i*2) { x = (x + i) }"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_notfunloopnaked(self):
+		library="function add(one, two) { return one + two; }"
+		input="var x = 0; for (var i=0; i<4; i=i*2) x = add(x, i)"
+		expected="var x = 0; for (var i=0; i<4; i=i*2) x = (x + i)"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 	def test_notfunloop2(self):
 		library="function add(one, two) { return one + two; }"
 		input="var x = 0; for (var i=0; i<4; i=i*2) { x = add(x, i) + add(x, i) }"

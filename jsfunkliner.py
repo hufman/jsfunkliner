@@ -407,6 +407,29 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 				quitnow=True
 			elif statement.type == 'IF':
 				self.walkexpression(statement.condition)
+				if statement.thenPart:
+					if len(statement.thenPart):
+						self.walkbranch(statement.thenPart, False)
+					else:
+						self.walkstatement(statement.thenPart)
+				if statement.elsePart:
+					if len(statement.elsePart):
+						self.walkbranch(statement.elsePart, False)
+					else:
+						self.walkstatement(statement.elsePart)
+				quitnow=True
+			elif statement.type == 'FOR':
+				self.walkstatement(statement.setup)
+				self.walkexpression(statement.condition)
+				self.walkexpression(statement.update)
+				if len(statement.body):
+					if statement.body.type=='VAR':
+						self.walkstatement(statement.body)
+					else:
+						self.walkbranch(statement.body, False)
+				else:
+					self.walkstatement(statement.body)
+				quitnow=True
 			elif statement.type == 'SEMICOLON':
 				self.walkexpression(statement.expression)
 				quitnow=True

@@ -738,6 +738,18 @@ class TestPassing(unittest.TestCase):
 		expected="var x = {one: this.munch}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_forloopreplacing(self):
+		library="function args(one, two, three) {for (var i = one; i < two; i += three) { var x = i + one + two + three; }}"
+		input="args(5,7,9)"
+		expected="for (var i = 5; i < 7; i += 9) { var x = i + 5 + 7 + 9; }"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_forloopreplacingnaked(self):
+		library="function args(one, two, three) {for (var i = one; i < two; i += three) var x = i + one + two + three; }"
+		input="args(5,7,9)"
+		expected="for (var i = 5; i < 7; i += 9) var x = i + 5 + 7 + 9;"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 if __name__ == '__main__':
 	if len(sys.argv)>1:

@@ -703,11 +703,14 @@ def inlineSingle(inputtext, librarytext):
 			if self.crawlingSwitchDefault:
 				return
 
+			if not len(object.keys()):
+				return
+
 			switchoutput=[]
 			switchoutput.append("switch (%s) {\n"%keyvariable)
 
 			needsRetVal = False
-			arguments = []
+			origarguments = []
 			for key in object.keys():
 				if object[key].getFunction()!=None:
 					switchoutput.append('	case "%s":\n'%key)

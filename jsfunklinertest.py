@@ -630,6 +630,12 @@ class TestSwitch(unittest.TestCase):
 		self.assertEqual(expected, output)
 		output=jsfunkliner.inlineSingle(output, library)
 		self.assertEqual(expected, output)
+	def test_noswitch(self):
+		library="cases = {}"
+		input='var select="log"; cases[select]();'
+		expected="var select=\"log\"; cases[select]();"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 class TestDef(unittest.TestCase):
 	def test_def(self):

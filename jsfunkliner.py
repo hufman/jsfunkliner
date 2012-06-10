@@ -151,6 +151,8 @@ def _crawlIdentifier(object, valuename):
 		return getattr(object, valuename)
 	if object.type=='NUMBER':
 		return str(getattr(object, valuename))
+	if object.type=='STRING':
+		return '"' + getattr(object, valuename) + '"'
 	if object.type=='DOT':
 		return _crawlIdentifier(object[0], valuename) + "." + _crawlIdentifier(object[1], valuename)
 	if object.type=='INDEX':
@@ -163,6 +165,12 @@ def _crawlIdentifier(object, valuename):
 	if object.type=='DECREMENT':
 		var = _crawlIdentifier(object[0], valuename)
 		return '--' + var if object.start < object[0].start else var + '--'
+	if object.type=='CALL':
+		return _crawlIdentifier(object[0], valuename) + '(' + ', '.join([_crawlIdentifier(x, valuename) for x in object[1]]) + ')'
+	if object.type=='OBJECT_INIT':
+		return '{' + ','.join([_crawlIdentifier(x, valuename) for x in object]) + '}'
+	if object.type=='PROPERTY_INIT':
+		return _crawlIdentifier(object[0], valuename) + ':' + _crawlIdentifier(object[1], valuename)
 	du={'MOD':'%', 'PLUS':'+', 'MINUS':'-', 'MUL':'*', 'DIV':'/', \
 	    'URSH':'>>>', 'RSH':'>>', 'LSH':'<<', 'BITWISE_AND': '&', 'BITWISE_OR':'|', 'BITWISE_XOR':'^', \
 	    'AND':'&&', 'OR':'||', \
@@ -722,7 +730,7 @@ def inlineSingle(inputtext, librarytext):
 
 					replacements={}
 					function=object[key].getFunction()
-					origarguments = ['"'+node.value+'"' if node.type=='STRING' else str(node.value) for node in call[1]]
+					origarguments = [_crawlIdentifier(node, 'value') for node in call[1]]
 					arguments=origarguments[:]
 
 					if call[0].type=='DOT' and call[0][0].type=='INDEX' and call[0][1].value=='call':

@@ -622,6 +622,30 @@ class TestSwitch(unittest.TestCase):
 		self.assertEqual(expected, output)
 		output=jsfunkliner.inlineSingle(output, library)
 		self.assertEqual(expected, output)
+	def test_switchobjectinstance(self):
+		library='object={}; object.cases = {"0" : function (instance) { this.get(instance); this.temp = this.get(instance); } }'
+		input='object.cases[select](thing);'
+		expected="switch (select) {\n\tcase \"0\":\n\tcase 0:\nobject.cases.get(thing); object.cases.temp = object.cases.get(thing);\n\tbreak;\n\tdefault:\n\tobject.cases[select](thing);\n}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
+	def test_switchobjectinstancecall(self):
+		library='object={}; object.cases = {"0" : function (instance) { this.get(instance); this.temp = this.get(instance); } }'
+		input='object.cases[select].call(munch,thing);'
+		expected="switch (select) {\n\tcase \"0\":\n\tcase 0:\nmunch.get(thing); munch.temp = munch.get(thing);\n\tbreak;\n\tdefault:\n\tobject.cases[select].call(munch, thing);\n}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
+	def test_switchobjectinstancecalldeep(self):
+		library='object={}; object.cases = {"0" : function (instance) { this.get(instance); this.temp = this.get(instance); } }'
+		input='object.cases[select].call(munch.sub,thing);'
+		expected="switch (select) {\n\tcase \"0\":\n\tcase 0:\nmunch.sub.get(thing); munch.sub.temp = munch.sub.get(thing);\n\tbreak;\n\tdefault:\n\tobject.cases[select].call(munch.sub, thing);\n}"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+		output=jsfunkliner.inlineSingle(output, library)
+		self.assertEqual(expected, output)
 	def test_nestedswitch(self):
 		library='var foo=function(thing){var x = thing}'
 		input='switch(thing){case "foo": foo(thing); break; case 1: foo(1); break; case 2: foo(2); break;}'

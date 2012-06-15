@@ -705,61 +705,87 @@ def inlineSingle(inputtext, librarytext):
 
 		def replacecallswitch(self, call, retname, usesReturn):
 			#import pdb; pdb.set_trace()
-			if call[0].type=='DOT' and call[0][0].type=='INDEX':		# has a .call or .apply or something
-				objectname = _crawlIdentifier(call[0][0][0], 'value')
-				keyvariable = _crawlIdentifier(call[0][0][1], 'value')
-				needscall = '.' + _crawlIdentifier(call[0][1], 'value')
-			else:
-				objectname = _crawlIdentifier(call[0][0], 'value')
-				keyvariable = _crawlIdentifier(call[0][1], 'value')
-				needscall = ''
+			curlayout = {}
+			level = call[0]
+			while True:
+				if level.type=='INDEX':				# ^object^[selector]
+					curlayout['objectname'] = _crawlIdentifier(level[0], 'value')
+					curlayout['keyvar'] = _crawlIdentifier(level[1], 'value')
+					if level[0].type=='DOT':		# ^object^.something[selector]
+						level=level[0]
+					elif level[0].type=='INDEX':
+						curlayout = {'deeper': curlayout}
+						level=level[0]
+					else:
+						break
+				elif level.type=='DOT':
+					if level[0].type=='INDEX':
+						curlayout = {'deeper': curlayout,
+						             'after': _crawlIdentifier(level[1], 'value')}
+						level=level[0]
+					else:
+						break
+				else:
+					break
 
-			object = env.get(objectname)
-			if object == None:
-				return
-
+			origcall = self.inputtext[call.start:call.end]
 			if self.crawlingSwitchDefault:
 				return
 
-			if not len(object.keys()):
-				return
-
+			needsRetVal = [False]
 			switchoutput=[]
-			switchoutput.append("switch (%s) {\n"%keyvariable)
 
-			needsRetVal = False
-			origarguments = []
-			for key in object.keys():
-				if object[key].getFunction()!=None:
+			def generateswitch(layout):
+				object = env.get(layout['objectname'])
+				if object == None:
+					raise NotImplementedError()
+
+				if not len(object.keys()):
+					raise NotImplementedError()
+
+				origarguments = []
+				switchoutput.append("switch (%s) {\n"%layout['keyvar'])
+				for key in object.keys():
 					switchoutput.append('	case "%s":\n'%key)
 					try:
 						if str(int(key)) == key:
 							switchoutput.append('	case %s:\n'%key)
 					except:
 						pass
+					if object[key].getFunction()!=None:
 
-					replacements={}
-					function=object[key].getFunction()
-					origarguments = [_crawlIdentifier(node, 'value') for node in call[1]]
-					arguments=origarguments[:]
+						replacements={}
+						function=object[key].getFunction()
+						origarguments = [_crawlIdentifier(node, 'value') for node in call[1]]
+						arguments=origarguments[:]
 
-					if call[0].type=='DOT' and call[0][0].type=='INDEX' and call[0][1].value=='call':
-						replacements['this'] = arguments.pop(0)
-					else:
-						replacements['this'] = objectname
+						if call[0].type=='DOT' and call[0][0].type=='INDEX' and call[0][1].value=='call':
+							replacements['this'] = arguments.pop(0)
+						else:
+							replacements['this'] = layout['objectname']
 
-					for i in range(0, len(arguments)):
-						replacements[function.params[i]] = arguments[i]
-					functionout = replaceIdentifiers(self.librarytext, function.body, replacements, retname, True)
-					needsRetVal = needsRetVal or functionout.needsRetVal
-					switchoutput.append(functionout.getOutput())
-					# If the function doesn't have a retval, add ending bits
-					if not needsRetVal:
-						switchoutput.append(';\n')
+						for i in range(0, len(arguments)):
+							replacements[function.params[i]] = arguments[i]
+						functionout = replaceIdentifiers(self.librarytext, function.body, replacements, retname, True)
+						needsRetVal[0] = needsRetVal[0] or functionout.needsRetVal
+						switchoutput.append(functionout.getOutput())
+						# If the function doesn't have a retval, add ending bits
+						if not needsRetVal[0]:
+							switchoutput.append(';\n')
+					elif 'deeper' in layout and layout['deeper']:
+						layout['deeper']['objectname']=layout['objectname'] + '.' + key
+						if 'after' in layout and layout['after']:
+							layout['deeper']['objectname'] += '.' + layout['after']
+						generateswitch(layout['deeper'])
 					switchoutput.append('\tbreak;\n')
-			switchoutput.append("	default:\n	%s[%s]%s(%s);\n}"%(objectname, keyvariable, needscall, ', '.join(origarguments)))
+				switchoutput.append("	default:\n	%s;\n}"%origcall)
+			try:
+				generateswitch(curlayout)
+			except NotImplementedError:		# could not handle it
+				return
 
-			if needsRetVal:
+
+			if needsRetVal[0]:
 				self.preput+=''.join(switchoutput)+"\n"
 				self.output.append(self.inputtext[self.inputoffset:call.start])
 				self.output.append(retname)

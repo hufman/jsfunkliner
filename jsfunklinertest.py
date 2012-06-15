@@ -633,7 +633,7 @@ class TestSwitch(unittest.TestCase):
 	def test_switchobjectinstancecall(self):
 		library='object={}; object.cases = {"0" : function (instance) { this.get(instance); this.temp = this.get(instance); } }'
 		input='object.cases[select].call(munch,thing);'
-		expected="switch (select) {\n\tcase \"0\":\n\tcase 0:\nmunch.get(thing); munch.temp = munch.get(thing);\n\tbreak;\n\tdefault:\n\tobject.cases[select].call(munch, thing);\n}"
+		expected="switch (select) {\n\tcase \"0\":\n\tcase 0:\nmunch.get(thing); munch.temp = munch.get(thing);\n\tbreak;\n\tdefault:\n\tobject.cases[select].call(munch,thing);\n}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 		output=jsfunkliner.inlineSingle(output, library)
@@ -641,7 +641,7 @@ class TestSwitch(unittest.TestCase):
 	def test_switchobjectinstancecalldeep(self):
 		library='object={}; object.cases = {"0" : function (instance) { this.get(instance); this.temp = this.get(instance); } }'
 		input='object.cases[select].call(munch.sub,thing);'
-		expected="switch (select) {\n\tcase \"0\":\n\tcase 0:\nmunch.sub.get(thing); munch.sub.temp = munch.sub.get(thing);\n\tbreak;\n\tdefault:\n\tobject.cases[select].call(munch.sub, thing);\n}"
+		expected="switch (select) {\n\tcase \"0\":\n\tcase 0:\nmunch.sub.get(thing); munch.sub.temp = munch.sub.get(thing);\n\tbreak;\n\tdefault:\n\tobject.cases[select].call(munch.sub,thing);\n}"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 		output=jsfunkliner.inlineSingle(output, library)
@@ -658,6 +658,24 @@ class TestSwitch(unittest.TestCase):
 		library="cases = {}"
 		input='var select="log"; cases[select]();'
 		expected="var select=\"log\"; cases[select]();"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_doubleswitch(self):
+		library='var foo={bar:{hi:function(){alert(this.hi);}}}'
+		input="foo[select1][select2]();"
+		expected='switch (select1) {\n\tcase "bar":\nswitch (select2) {\n\tcase "hi":\nalert(foo.bar.hi);\n\tbreak;\n\tdefault:\n\tfoo[select1][select2]();\n}\tbreak;\n\tdefault:\n\tfoo[select1][select2]();\n}'
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_doubleswitchsub(self):
+		library='var foo={bar:{sub:{hi:function(){alert(this.hi);}}}}'
+		input="foo[select1].sub[select2]();"
+		expected='switch (select1) {\n\tcase "bar":\nswitch (select2) {\n\tcase "hi":\nalert(foo.bar.sub.hi);\n\tbreak;\n\tdefault:\n\tfoo[select1].sub[select2]();\n}\tbreak;\n\tdefault:\n\tfoo[select1].sub[select2]();\n}'
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_doubleswitchsubcall(self):
+		library='var foo={bar:{sub:{hi:function(){alert(this.hi);}}}}'
+		input="foo[select1].sub[select2].call(minch);"
+		expected='switch (select1) {\n\tcase "bar":\nswitch (select2) {\n\tcase "hi":\nalert(minch.hi);\n\tbreak;\n\tdefault:\n\tfoo[select1].sub[select2].call(minch);\n}\tbreak;\n\tdefault:\n\tfoo[select1].sub[select2].call(minch);\n}'
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 

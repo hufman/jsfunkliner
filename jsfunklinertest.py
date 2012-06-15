@@ -176,31 +176,6 @@ class TestBasic(unittest.TestCase):
 		expected="var retthis_final_i_0 = undefined;\nvar two = 2; retthis_final_i_0 = 2 * two;\nthis.final[i] = retthis_final_i_0"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
-	def test_callreplaceiffor(self):
-		library="function nested(instance) { if (true) {for (var i=0; i<1; i++) thingie();\ninstance.run(instance, 1);}}"
-		input="nested(instance2)"
-		expected="if (true) {for (var i=0; i<1; i++) thingie();\ninstance2.run(instance2, 1);}"
-		output=jsfunkliner.inlineSingle(input, library)
-		self.assertEqual(expected, output)
-	def test_callreplacebareiffor(self):
-		library="function nested(instance) { if (true) for (var i=0; i<1; i++) thingie();\ninstance.run(instance, 1);}"
-		input="nested(instance2)"
-		expected="if (true) for (var i=0; i<1; i++) thingie();\ninstance2.run(instance2, 1)"
-		output=jsfunkliner.inlineSingle(input, library)
-		self.assertEqual(expected, output)
-## jsparser doesn't like these
-#	def test_callreplaceforbareif(self):
-#		library="function nested(instance) { for (var i=0; i<1; i++) if (true) thingie();\ninstance.run(instance, 1);}"
-#		input="nested(instance2)"
-#		expected="for (var i=0; i<1; i++) if (true) thingie();\ninstance2.run(instance2, 1);"
-#		output=jsfunkliner.inlineSingle(input, library)
-#		self.assertEqual(expected, output)
-#	def test_callreplaceifforbareif(self):
-#		library="function nested(instance) { if (true) { for (var i=0; i<1; i++) if (true) thingie();\ninstance.run(instance, 1);}}"
-#		input="nested(instance2)"
-#		expected="if (true) { for (var i=0; i<1; i++) if (true) thingie();\ninstance2.run(instance2, 1);}"
-#		output=jsfunkliner.inlineSingle(input, library)
-#		self.assertEqual(expected, output)
 
 class TestUnrolling(unittest.TestCase):
 	def test_funloop(self):

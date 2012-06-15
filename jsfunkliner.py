@@ -439,7 +439,8 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 					self.walkstatement(statement.body)
 				quitnow=True
 			elif statement.type == 'SEMICOLON':
-				self.walkexpression(statement.expression)
+				if statement.expression:	# not spurious semicolon
+					self.walkexpression(statement.expression)
 				quitnow=True
 			elif statement.type == 'VAR':
 				if hasattr(statement[0], 'initializer'):

@@ -454,7 +454,7 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 						elif len(child):
 							self.walkbranch(child, False)
 						else:
-							self.walkexpressionpiece(child)
+							self.walkstatement(child)
 			if self.inputoffset < statement.end:
 				#print("Setting offset to "+str(statement.end))
 				self.output.append(self.librarytext[self.inputoffset:statement.end])
@@ -482,10 +482,20 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 					self.walkexpression(piece)
 			elif piece.type=='NUMBER':
 				pass
+			elif piece.type=='IF':
+				self.walkstatement(piece)
 			elif piece.type in ['TRUE', 'FALSE']:
+				pass
+			elif piece.type=='NULL':
 				pass
 			elif piece.type=='DOT':					# don't replace identifiers that are after a dot
 				self.walkexpressionpiece(piece[0])
+			elif piece.type=='ARRAY_INIT':
+				if len(piece):
+					self.walkexpression(piece)
+			elif piece.type=='OBJECT_INIT':
+				if len(piece):
+					self.walkexpression(piece)
 			elif piece.type=='PROPERTY_INIT':			# don't replace identifiers that are the keys of {}
 				self.walkexpressionpiece(piece[1])
 			elif len(piece):

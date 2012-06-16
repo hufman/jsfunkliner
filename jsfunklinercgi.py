@@ -109,6 +109,10 @@ var loader=function() {
 			'desc':'Function switch',
 			'library':'steps = {\\n\\t0:function(){\\n\\t\\tthis.increment(1)},\\n\\t1:function(){\\n\\t\\tthis.increment(2)},\\n\\t2:function(){\\n\\t\\tthis.decrement(3)}\\n}',
 			'snippet':'for (var step = 0; step<steps.length; step++) {\\n\\tsteps[step].call(datablob);\\n}'
+	},{
+			'desc':'Double Function switch',
+			'library':'steps = {\\n\\t0:function(){\\n\\t\\tthis.increment(1)},\\n\\t1:function(){\\n\\t\\tthis.increment(2)},\\n\\t2:function(){\\n\\t\\tthis.decrement(3)}\\n}; othersteps = {\\n\\t0:function(){\\n\\t\\tthis.increment(2)},\\n\\t1:function(){\\n\\t\\tthis.increment(3)},\\n\\t2:function(){\\n\\t\\tthis.decrement(6)}\\n}; totalsteps={mode1:steps, mode2:othersteps}',
+			'snippet':'var mode="mode1"; for (var step = 0; step<steps.length; step++) {\\n\\ttotalsteps[mode][step].call(datablob);\\n}'
 	}];
 
 	var box = document.getElementById('examples');
@@ -163,6 +167,7 @@ Limitations:
 <li>Incorrect results when passing an incrementing variable through a call [ blahfunction(a++) ]</li>
 </ul>
 </p>
+<p>For more information, view the <a href="http://github.com/hufman/jsfunkliner">source code on Github</a></p>
 
 """)
 	print('<p>Examples: <select id="examples"></select></p>')

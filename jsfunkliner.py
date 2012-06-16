@@ -6,6 +6,8 @@ import traceback
 import sys
 import re
 
+transdel = ''.join(c for c in map(chr, range(256)) if not c.isalnum())
+
 class JSEnvironment:
 	def __init__(self, root, this):
 		"""
@@ -165,6 +167,10 @@ def _crawlIdentifier(object, valuename):
 	if object.type=='DECREMENT':
 		var = _crawlIdentifier(object[0], valuename)
 		return '--' + var if object.start < object[0].start else var + '--'
+	if object.type=='BITWISE_NOT':
+		return '~' + _crawlIdentifier(object[0], valuename)
+	if object.type=='HOOK':
+		return _crawlIdentifier(object[0], valuename) + "?" + _crawlIdentifier(object[1], valuename) + ":" + _crawlIdentifier(object[2], valuename)
 	if object.type=='CALL':
 		return _crawlIdentifier(object[0], valuename) + '(' + ', '.join([_crawlIdentifier(x, valuename) for x in object[1]]) + ')'
 	if object.type=='OBJECT_INIT':
@@ -626,7 +632,7 @@ def inlineSingle(inputtext, librarytext):
 		def walkexpression(self, expression, name, usesReturn):
 			#import pdb; pdb.set_trace()
 			if expression.type=='CALL':
-				retname = 'ret' + name.replace('.','_').replace('[','_').replace(']','_') + str(self.callcount)
+				retname = 'ret' + name.translate(None, transdel) + str(self.callcount)
 				if not usesReturn:
 					retname = None
 				self.replacecall(expression, retname, usesReturn)

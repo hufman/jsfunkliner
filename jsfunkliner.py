@@ -659,7 +659,7 @@ def inlineSingle(inputtext, librarytext):
 				return
 			for piece in expression:		# for each part of a line
 				if piece.type=='CALL':
-					retname = 'ret' + name.replace('.','_').replace('[','_').replace(']','_') + str(self.callcount)
+					retname = 'ret' + name.translate(None, transdel) + str(self.callcount)
 					if not usesReturn:
 						retname = None
 					self.replacecall(piece, retname, usesReturn)

@@ -180,7 +180,7 @@ class TestBasic(unittest.TestCase):
 	def test_dotcallretval(self):
 		library="function square(one) { var two = one; return one * two; }"
 		input="this.final[i] = square(2)"
-		expected="var retthis_final_i_0 = undefined;\nvar two = 2; retthis_final_i_0 = 2 * two;\nthis.final[i] = retthis_final_i_0"
+		expected="var retthisfinali0 = undefined;\nvar two = 2; retthisfinali0 = 2 * two;\nthis.final[i] = retthisfinali0"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 

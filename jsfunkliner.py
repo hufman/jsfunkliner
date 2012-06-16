@@ -452,6 +452,10 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 				if hasattr(statement[0], 'initializer'):
 					self.walkexpression(statement[0].initializer)
 					statement.end=statement[0].initializer.end
+			elif statement.type == 'SWITCH':
+				if hasattr(statement, 'cases'):
+					for case in statement.cases:
+						self.walkbranch(case.statements, False)
 			if not quitnow:
 				for attr in Replacer.CHILD_ATTRS:
 					child = getattr(statement, attr, None)

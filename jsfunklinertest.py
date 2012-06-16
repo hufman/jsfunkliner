@@ -667,6 +667,12 @@ class TestSwitch(unittest.TestCase):
 		expected="var select=\"log\"; cases[select]();"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_switchlibrary(self):
+		library="something=function(){}; something.run=function(){switch(hi){case 4: this.munch()}; alert(5)}"
+		input="something.run()"
+		expected="switch(hi){case 4: something.munch()}; alert(5)"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 	def test_doubleswitch(self):
 		library='var foo={bar:{hi:function(){alert(this.hi);}}}'
 		input="foo[select1][select2]();"

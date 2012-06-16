@@ -479,6 +479,13 @@ class TestAssignment(unittest.TestCase):
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
 
+	def test_objectassignmentproperty(self):
+		library="var run=function(){thing='hi';}; object={run:run}"
+		input="object.run()";
+		expected="thing='hi'"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+
 class TestNewObject(unittest.TestCase):
 	def test_newobjectsinglecall(self):
 		library="object = function(){}; object.prototype={log : function (message) { if (typeof(console) != 'undefined' && typeof(console.log) != 'undefined') console.log(message) } }; object2 = new object()"
@@ -687,6 +694,12 @@ class TestSwitch(unittest.TestCase):
 		self.assertEqual(expected, output)
 	def test_doubleswitchsubcall(self):
 		library='var foo={bar:{sub:{hi:function(){alert(this.hi);}}}}'
+		input="foo[select1].sub[select2].call(minch);"
+		expected='switch (select1) {\n\tcase "bar":\nswitch (select2) {\n\tcase "hi":\nalert(minch.hi);\n\tbreak;\n\tdefault:\n\tfoo[select1].sub[select2].call(minch);\n}\tbreak;\n\tdefault:\n\tfoo[select1].sub[select2].call(minch);\n}'
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
+	def test_doubleassignment(self):
+		library='var sub={hi:function(){alert(this.hi);}}; var foo={bar:{sub:sub}}'
 		input="foo[select1].sub[select2].call(minch);"
 		expected='switch (select1) {\n\tcase "bar":\nswitch (select2) {\n\tcase "hi":\nalert(minch.hi);\n\tbreak;\n\tdefault:\n\tfoo[select1].sub[select2].call(minch);\n}\tbreak;\n\tdefault:\n\tfoo[select1].sub[select2].call(minch);\n}'
 		output=jsfunkliner.inlineSingle(input, library)

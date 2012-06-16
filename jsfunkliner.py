@@ -290,31 +290,36 @@ def _crawlFunctions(env, code):
 					return deferred
 				deferredcrawling.append(makedeferredinit(name, fromname))
 				
-		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='FUNCTION':		# { x : function() }
-			env.set("this."+str(node[0].value), JSObject(node[1]))
-		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='OBJECT_INIT':		# { x : {} }
-			name = "this." + node[0].value
-			newthis = env.get(name) or JSObject()
-			env.set(name, newthis)
-			env.pushThis(newthis)
-			_crawlFunctions(env, node[1])
-			env.popThis()
-		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER') and node[1].type=='ARRAY_INIT':		# { x : [] }
-			name = "this." + node[0].value
-			newthis = env.get(name) or JSObject()
-			env.set(name, newthis)
-			env.pushThis(newthis)
-			for index in range(0, len(node[1])):
-				newthis = JSObject(node[1][index])	# create the function object
-				name='this.'+str(index)
-				env.set(name, newthis)
-				name=name+".prototype"
-				newthis = JSObject()			# create a blank prototype
+		elif node.type=='PROPERTY_INIT' and (node[0].type=='IDENTIFIER' or node[0].type=='STRING' or node[0].type=='NUMBER'):
+			if node[1].type=='FUNCTION':		# { x : function() }
+				env.set("this."+str(node[0].value), JSObject(node[1]))
+			elif node[1].type=='IDENTIFIER':	# { x : y }
+				temp = env.get(_crawlIdentifier(node[1], 'value'))
+				if temp:
+					env.set("this."+str(node[0].value), temp)
+			elif node[1].type=='OBJECT_INIT':		# { x : {} }
+				name = "this." + node[0].value
+				newthis = env.get(name) or JSObject()
 				env.set(name, newthis)
 				env.pushThis(newthis)
-				_crawlFunctions(env, node[1][index])		# crawl the "constructor"
+				_crawlFunctions(env, node[1])
 				env.popThis()
-			env.popThis()
+			elif node[1].type=='ARRAY_INIT':		# { x : [] }
+				name = "this." + node[0].value
+				newthis = env.get(name) or JSObject()
+				env.set(name, newthis)
+				env.pushThis(newthis)
+				for index in range(0, len(node[1])):
+					newthis = JSObject(node[1][index])	# create the function object
+					name='this.'+str(index)
+					env.set(name, newthis)
+					name=name+".prototype"
+					newthis = JSObject()			# create a blank prototype
+					env.set(name, newthis)
+					env.pushThis(newthis)
+					_crawlFunctions(env, node[1][index])		# crawl the "constructor"
+					env.popThis()
+				env.popThis()
 	for deferred in deferredcrawling:
 		deferred()
 	return env

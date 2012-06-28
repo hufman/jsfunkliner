@@ -477,6 +477,10 @@ def replaceIdentifiers(librarytext, body, replacements, retval, forceretval):
 				self.inputoffset=statement.end
 
 		def walkexpression(self, expression):
+			if expression.type == 'ASSIGN':
+				destination = _crawlIdentifier(expression[0], 'value')
+				if destination in replacements.keys():
+					del replacements[destination]
 			if len(expression):
 				for piece in expression:
 					self.walkexpressionpiece(piece)

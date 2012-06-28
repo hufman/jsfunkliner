@@ -824,6 +824,12 @@ class TestPassing(unittest.TestCase):
 		expected="for (var i = 5; i < 7; i += 9) var x = i + 5 + 7 + 9;"
 		output=jsfunkliner.inlineSingle(input, library)
 		self.assertEqual(expected, output)
+	def test_stupidoverloading(self):
+		library="function dumb(one) {alert(one); one='replace'}"
+		input="dumb(5+6)"
+		expected="alert(5+6); one='replace'"
+		output=jsfunkliner.inlineSingle(input, library)
+		self.assertEqual(expected, output)
 
 if __name__ == '__main__':
 	if len(sys.argv)>1:
